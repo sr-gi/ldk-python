@@ -1,10 +1,11 @@
-
 use pyo3::prelude::*;
+use pyo3::wrap_pyfunction;
 
-use lightning::util::logger::{Record, Logger, Level};
+use lightning::util::logger::{Level, Logger, Record};
 
 #[pyclass]
 #[text_signature = "(logger, /)"]
+#[derive(Clone)]
 /// Logger interface. The constructor requires a class implementing, at least, the ``log(message: str, level: str)`` method.
 pub struct LDKLogger {
     inner: Py<PyAny>,
@@ -14,7 +15,7 @@ pub struct LDKLogger {
 impl LDKLogger {
     #[new]
     fn new(logger: Py<PyAny>) -> Self {
-        LDKLogger{inner: logger}
+        LDKLogger { inner: logger }
     }
 
     #[text_signature = "($self, record, level)"]
@@ -22,13 +23,12 @@ impl LDKLogger {
         Python::with_gil(|py| {
             let py_logger = self.inner.as_ref(py);
             let message = format!("{}", record);
-            match py_logger.call_method("log", (message, level,), None){
+            match py_logger.call_method("log", (message, level), None) {
                 Ok(_) => (),
-                Err(error) => error.print(py)
+                Err(error) => error.print(py),
             };
         })
     }
-
 
     #[text_signature = "($self, record)"]
     fn error(&self, record: String) {
@@ -61,18 +61,41 @@ impl Logger for LDKLogger {
         Python::with_gil(|py| {
             let py_logger = self.inner.as_ref(py);
             let message = format!("{}", record.args);
-            match py_logger.call_method("log", (message, record.level.to_string()), None){
+            match py_logger.call_method("log", (message, record.level.to_string()), None) {
                 Ok(_) => (),
-                Err(error) => error.print(py)
+                Err(error) => error.print(py),
             };
         })
     }
 }
 
-
 #[pymodule]
 /// Loggin library for LDK.
 fn logger(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<LDKLogger>()?;
+    m.add_function(wrap_pyfunction!(ldk_test_logger_trait, m)?)
+        .unwrap();
     Ok(())
+}
+
+// Temorary tests, until we find a better place for them
+
+#[pyfunction]
+/// Function that can be called from Python to tests that the trait bounds work
+fn ldk_test_logger_trait(logger: LDKLogger, message: String) {
+    inner_test(
+        logger,
+        &Record::new(
+            Level::Debug,
+            format_args!("{}", message),
+            module_path!(),
+            file!(),
+            line!(),
+        ),
+    )
+}
+
+/// Actual test, should show the data in Python
+fn inner_test<L: Logger>(logger: L, r: &Record) {
+    logger.log(&r)
 }
