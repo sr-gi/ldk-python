@@ -22,8 +22,7 @@ impl LDKLogger {
     fn log(&self, record: String, level: String) {
         Python::with_gil(|py| {
             let py_logger = self.inner.as_ref(py);
-            let message = format!("{}", record);
-            match py_logger.call_method("log", (message, level), None) {
+            match py_logger.call_method1("log", (record, level)) {
                 Ok(_) => (),
                 Err(error) => error.print(py),
             };
@@ -58,19 +57,13 @@ impl LDKLogger {
 
 impl Logger for LDKLogger {
     fn log(&self, record: &Record) {
-        Python::with_gil(|py| {
-            let py_logger = self.inner.as_ref(py);
-            let message = format!("{}", record.args);
-            match py_logger.call_method("log", (message, record.level.to_string()), None) {
-                Ok(_) => (),
-                Err(error) => error.print(py),
-            };
-        })
+        let message = format!("{}", record.args);
+        self.log(message, record.level.to_string())
     }
 }
 
 #[pymodule]
-/// Loggin library for LDK.
+/// Loggin module for LDK.
 fn logger(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<LDKLogger>()?;
     m.add_function(wrap_pyfunction!(ldk_test_logger_trait, m)?)
