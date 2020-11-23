@@ -9,6 +9,6 @@ name = "ldk_python"
 crate-type = ["cdylib"]
 
 [dependencies]
-lightning = "0.0.11"
-bitcoin = "0.21"
+lightning = "0.0.12"
+bitcoin = "0.24"
 pyo3 = { version = "0.12.3", features = ["extension-module"] }
