@@ -1,28 +1,33 @@
+use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::PyObjectProtocol;
-use pyo3::exceptions;
 
 use bitcoin::blockdata::block::BlockHeader;
-use bitcoin::secp256k1::key::{SecretKey, PublicKey};
+use bitcoin::blockdata::script::Script;
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
-use bitcoin::secp256k1::constants::{SECRET_KEY_SIZE, PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE};
-
+use bitcoin::secp256k1::constants::{
+    PUBLIC_KEY_SIZE, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
+};
+use bitcoin::secp256k1::key::{PublicKey, SecretKey};
 
 #[pyclass(name=SecretKey)]
+#[derive(Clone)]
 pub struct PySecretKey {
-    inner: SecretKey
+    pub inner: SecretKey,
 }
-
 
 #[pymethods]
 impl PySecretKey {
     #[new]
-    fn new(data: &[u8]) -> PyResult<Self> {
+    pub fn new(data: &[u8]) -> PyResult<Self> {
         if data.len() != SECRET_KEY_SIZE {
-            Err(exceptions::PyValueError::new_err(format!("Data must be {}-byte long", SECRET_KEY_SIZE)))
+            Err(exceptions::PyValueError::new_err(format!(
+                "Data must be {}-byte long",
+                SECRET_KEY_SIZE
+            )))
         } else {
             let sk = match SecretKey::from_slice(data) {
-                Ok(x) => Ok(PySecretKey{inner: x}),
+                Ok(x) => Ok(PySecretKey { inner: x }),
                 Err(error) => Err(exceptions::PyValueError::new_err(format!("{}", error))),
             };
             sk
@@ -32,14 +37,14 @@ impl PySecretKey {
 
 #[pyproto]
 impl PyObjectProtocol for PySecretKey {
-    fn __str__(&self) -> PyResult<String>   {
+    fn __str__(&self) -> PyResult<String> {
         Ok(format!("{:#x}", self.inner))
     }
 }
 
 #[pyclass(name=PublicKey)]
 pub struct PyPublicKey {
-    inner: PublicKey
+    inner: PublicKey,
 }
 
 #[pymethods]
@@ -47,10 +52,13 @@ impl PyPublicKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
         if data.len() != PUBLIC_KEY_SIZE && data.len() != UNCOMPRESSED_PUBLIC_KEY_SIZE {
-            Err(exceptions::PyValueError::new_err(format!("Data must be {} or {} bytes long", PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE)))
+            Err(exceptions::PyValueError::new_err(format!(
+                "Data must be {} or {} bytes long",
+                PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE
+            )))
         } else {
             let pk = match PublicKey::from_slice(data) {
-                Ok(x) => Ok(PyPublicKey{inner: x}),
+                Ok(x) => Ok(PyPublicKey { inner: x }),
                 Err(error) => Err(exceptions::PyValueError::new_err(format!("{}", error))),
             };
             pk
@@ -60,14 +68,14 @@ impl PyPublicKey {
 
 #[pyproto]
 impl PyObjectProtocol for PyPublicKey {
-    fn __str__(&self) -> PyResult<String>   {
+    fn __str__(&self) -> PyResult<String> {
         Ok(format!("{:#x}", self.inner))
     }
 }
 
 #[pyclass(name=BlockHeader)]
 pub struct PyBlockHeader {
-    inner: BlockHeader
+    inner: BlockHeader,
 }
 
 #[pymethods]
@@ -75,10 +83,12 @@ impl PyBlockHeader {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
         if data.len() != 80 {
-            Err(exceptions::PyValueError::new_err(format!("Data must be 80-byte long")))
+            Err(exceptions::PyValueError::new_err(format!(
+                "Data must be 80-byte long"
+            )))
         } else {
-            let header = match  deserialize(&data) {
-                Ok(x) => Ok(PyBlockHeader{inner: x}),
+            let header = match deserialize(&data) {
+                Ok(x) => Ok(PyBlockHeader { inner: x }),
                 Err(error) => Err(exceptions::PyValueError::new_err(format!("{}", error))),
             };
             header
@@ -86,7 +96,7 @@ impl PyBlockHeader {
     }
 
     #[getter]
-    fn version(&self) -> u32 {
+    fn version(&self) -> i32 {
         self.inner.version
     }
 
@@ -118,8 +128,26 @@ impl PyBlockHeader {
 
 #[pyproto]
 impl PyObjectProtocol for PyBlockHeader {
-    fn __str__(&self) -> PyResult<String>   {
+    fn __str__(&self) -> PyResult<String> {
         Ok(serialize_hex(&self.inner))
+    }
+}
+
+#[pyclass(name=Script)]
+pub struct PyScript {
+    pub inner: Script,
+}
+
+#[pymethods]
+impl PyScript {
+    #[new]
+    pub fn new(data: Vec<u8>) -> Self {
+        let script = Script::from(data);
+        PyScript { inner: script }
+    }
+
+    fn as_bytes(&self) -> &[u8] {
+        self.inner.as_bytes()
     }
 }
 
@@ -128,5 +156,6 @@ fn primitives(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PySecretKey>()?;
     m.add_class::<PyPublicKey>()?;
     m.add_class::<PyBlockHeader>()?;
+    m.add_class::<PyScript>()?;
     Ok(())
 }
