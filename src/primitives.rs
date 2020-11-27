@@ -4,6 +4,7 @@ use pyo3::PyObjectProtocol;
 
 use bitcoin::blockdata::block::BlockHeader;
 use bitcoin::blockdata::script::Script;
+use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::secp256k1::constants::{
     PUBLIC_KEY_SIZE, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
@@ -44,13 +45,13 @@ impl PyObjectProtocol for PySecretKey {
 
 #[pyclass(name=PublicKey)]
 pub struct PyPublicKey {
-    inner: PublicKey,
+    pub inner: PublicKey,
 }
 
 #[pymethods]
 impl PyPublicKey {
     #[new]
-    fn new(data: &[u8]) -> PyResult<Self> {
+    pub fn new(data: &[u8]) -> PyResult<Self> {
         if data.len() != PUBLIC_KEY_SIZE && data.len() != UNCOMPRESSED_PUBLIC_KEY_SIZE {
             Err(exceptions::PyValueError::new_err(format!(
                 "Data must be {} or {} bytes long",
@@ -151,11 +152,41 @@ impl PyScript {
     }
 }
 
+#[pyproto]
+impl PyObjectProtocol for PyScript {
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serialize_hex(&self.inner))
+    }
+}
+
+#[pyclass(name=Transaction)]
+#[derive(Clone)]
+pub struct PyTransaction {
+    pub inner: Transaction,
+}
+
+#[pymethods]
+impl PyTransaction {
+    #[new]
+    pub fn new(data: Vec<u8>) -> Self {
+        let tx: Transaction = deserialize(&data).unwrap();
+        PyTransaction { inner: tx }
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyTransaction {
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serialize_hex(&self.inner))
+    }
+}
+
 #[pymodule]
 fn primitives(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PySecretKey>()?;
     m.add_class::<PyPublicKey>()?;
     m.add_class::<PyBlockHeader>()?;
     m.add_class::<PyScript>()?;
+    m.add_class::<PyTransaction>()?;
     Ok(())
 }

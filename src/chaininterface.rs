@@ -1,8 +1,11 @@
 use pyo3::prelude::*;
 
 use crate::binding_utils::process_python_return;
+use crate::primitives::PyTransaction;
 
-use lightning::chain::chaininterface::{ConfirmationTarget, FeeEstimator};
+use bitcoin::blockdata::transaction::Transaction;
+
+use lightning::chain::chaininterface::{BroadcasterInterface, ConfirmationTarget, FeeEstimator};
 
 #[pyclass(name=FeeEstimator)]
 pub struct PyFeeEstimator {
@@ -42,9 +45,41 @@ impl FeeEstimator for PyFeeEstimator {
     }
 }
 
+#[pyclass(name=BroadcasterInterface)]
+pub struct PyBroadcasterInterface {
+    inner: Py<PyAny>,
+}
+
+#[pymethods]
+impl PyBroadcasterInterface {
+    #[new]
+    fn new(broadcaster_interface: Py<PyAny>) -> Self {
+        PyBroadcasterInterface {
+            inner: broadcaster_interface,
+        }
+    }
+
+    #[text_signature = "($self, confirmation_target)"]
+    fn broadcast_transaction(&self, transaction: PyTransaction) {
+        Python::with_gil(|py| {
+            let broadcast_interface = self.inner.as_ref(py);
+            let _: PyResult<PyTransaction> = process_python_return(
+                broadcast_interface.call_method1("broadcast_transaction", (transaction,)),
+            );
+        })
+    }
+}
+
+impl BroadcasterInterface for PyBroadcasterInterface {
+    fn broadcast_transaction(&self, tx: &Transaction) {
+        self.broadcast_transaction(PyTransaction { inner: tx.clone() })
+    }
+}
+
 #[pymodule]
 /// Chain interface module for LDK.
 fn chaininterface(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyFeeEstimator>()?;
+    m.add_class::<PyBroadcasterInterface>()?;
     Ok(())
 }
