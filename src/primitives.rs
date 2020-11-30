@@ -1,16 +1,19 @@
 use pyo3::exceptions;
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 use pyo3::PyObjectProtocol;
 
 use bitcoin::blockdata::block::BlockHeader;
 use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::Transaction;
-use bitcoin::consensus::encode::{deserialize, serialize_hex};
+use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
 use bitcoin::hash_types::Txid;
 use bitcoin::secp256k1::constants::{
     PUBLIC_KEY_SIZE, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
 };
 use bitcoin::secp256k1::key::{PublicKey, SecretKey};
+
+use lightning::chain::transaction::OutPoint;
 
 #[pyclass(name=SecretKey)]
 #[derive(Clone)]
@@ -162,6 +165,7 @@ impl PyObjectProtocol for PyScript {
 }
 
 #[pyclass(name=TxId)]
+#[derive(Clone)]
 pub struct PyTxId {
     pub inner: Txid,
 }
@@ -186,6 +190,53 @@ impl PyTxId {
 impl PyObjectProtocol for PyTxId {
     fn __str__(&self) -> PyResult<String> {
         Ok(serialize_hex(&self.inner))
+    }
+}
+
+#[pyclass(name=OutPoint)]
+pub struct PyOutPoint {
+    pub inner: OutPoint,
+}
+
+#[pymethods]
+impl PyOutPoint {
+    #[new]
+    pub fn new(txid: PyTxId, index: u16) -> Self {
+        PyOutPoint {
+            inner: OutPoint {
+                txid: txid.inner,
+                index,
+            },
+        }
+    }
+
+    #[staticmethod]
+    pub fn from_bytes(txid: Vec<u8>, index: u16) -> PyResult<Self> {
+        match PyTxId::new(txid) {
+            Ok(x) => Ok(PyOutPoint::new(x, index)),
+            Err(e) => Err(e),
+        }
+    }
+
+    #[getter]
+    fn txid(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner.txid)).into()
+    }
+
+    #[getter]
+    fn index(&self) -> u16 {
+        self.inner.index
+    }
+
+    pub fn to_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner.to_channel_id())).into()
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyOutPoint {
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serialize_hex(&self.inner.into_bitcoin_outpoint()))
     }
 }
 
@@ -219,6 +270,7 @@ fn primitives(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyBlockHeader>()?;
     m.add_class::<PyScript>()?;
     m.add_class::<PyTxId>()?;
+    m.add_class::<PyOutPoint>()?;
     m.add_class::<PyTransaction>()?;
     Ok(())
 }
