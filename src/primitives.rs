@@ -6,6 +6,7 @@ use bitcoin::blockdata::block::BlockHeader;
 use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
+use bitcoin::hash_types::Txid;
 use bitcoin::secp256k1::constants::{
     PUBLIC_KEY_SIZE, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
 };
@@ -143,8 +144,9 @@ pub struct PyScript {
 impl PyScript {
     #[new]
     pub fn new(data: Vec<u8>) -> Self {
-        let script = Script::from(data);
-        PyScript { inner: script }
+        PyScript {
+            inner: Script::from(data),
+        }
     }
 
     fn as_bytes(&self) -> &[u8] {
@@ -154,6 +156,34 @@ impl PyScript {
 
 #[pyproto]
 impl PyObjectProtocol for PyScript {
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serialize_hex(&self.inner))
+    }
+}
+
+#[pyclass(name=TxId)]
+pub struct PyTxId {
+    pub inner: Txid,
+}
+
+#[pymethods]
+impl PyTxId {
+    #[new]
+    pub fn new(data: Vec<u8>) -> PyResult<Self> {
+        if data.len() != 32 {
+            Err(exceptions::PyValueError::new_err(format!(
+                "Data must be 32-byte long"
+            )))
+        } else {
+            Ok(PyTxId {
+                inner: deserialize(&data).unwrap(),
+            })
+        }
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyTxId {
     fn __str__(&self) -> PyResult<String> {
         Ok(serialize_hex(&self.inner))
     }
@@ -169,8 +199,9 @@ pub struct PyTransaction {
 impl PyTransaction {
     #[new]
     pub fn new(data: Vec<u8>) -> Self {
-        let tx: Transaction = deserialize(&data).unwrap();
-        PyTransaction { inner: tx }
+        PyTransaction {
+            inner: deserialize(&data).unwrap(),
+        }
     }
 }
 
@@ -187,6 +218,7 @@ fn primitives(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyPublicKey>()?;
     m.add_class::<PyBlockHeader>()?;
     m.add_class::<PyScript>()?;
+    m.add_class::<PyTxId>()?;
     m.add_class::<PyTransaction>()?;
     Ok(())
 }
