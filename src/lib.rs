@@ -2,7 +2,8 @@ use pyo3::prelude::*;
 
 pub mod binding_utils;
 pub mod chaininterface;
-pub mod keysmanager;
+pub mod chan_utils;
+pub mod keysinterface;
 pub mod logger;
 pub mod primitives;
 
