@@ -8,9 +8,7 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
 use bitcoin::hash_types::Txid;
-use bitcoin::secp256k1::constants::{
-    PUBLIC_KEY_SIZE, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
-};
+use bitcoin::secp256k1::constants::{PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE};
 use bitcoin::secp256k1::key::{PublicKey, SecretKey};
 
 use lightning::chain::transaction::OutPoint;
@@ -24,19 +22,16 @@ pub struct PySecretKey {
 #[pymethods]
 impl PySecretKey {
     #[new]
-    pub fn new(data: &[u8]) -> PyResult<Self> {
-        if data.len() != SECRET_KEY_SIZE {
-            Err(exceptions::PyValueError::new_err(format!(
-                "Data must be {}-byte long",
-                SECRET_KEY_SIZE
-            )))
-        } else {
-            let sk = match SecretKey::from_slice(data) {
-                Ok(x) => Ok(PySecretKey { inner: x }),
-                Err(error) => Err(exceptions::PyValueError::new_err(format!("{}", error))),
-            };
-            sk
-        }
+    pub fn new(data: [u8; 32]) -> PyResult<Self> {
+        let sk = match SecretKey::from_slice(&data) {
+            Ok(x) => Ok(PySecretKey { inner: x }),
+            Err(error) => Err(exceptions::PyValueError::new_err(format!("{}", error))),
+        };
+        sk
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner[..]).into()
     }
 }
 
@@ -48,6 +43,7 @@ impl PyObjectProtocol for PySecretKey {
 }
 
 #[pyclass(name=PublicKey)]
+#[derive(Clone)]
 pub struct PyPublicKey {
     pub inner: PublicKey,
 }
@@ -67,6 +63,15 @@ impl PyPublicKey {
                 Err(error) => Err(exceptions::PyValueError::new_err(format!("{}", error))),
             };
             pk
+        }
+    }
+
+    #[args(compressed = "true")]
+    fn serialize(&self, py: Python, compressed: bool) -> Py<PyBytes> {
+        if compressed {
+            PyBytes::new(py, &self.inner.serialize()).into()
+        } else {
+            PyBytes::new(py, &self.inner.serialize_uncompressed()).into()
         }
     }
 }
@@ -129,6 +134,10 @@ impl PyBlockHeader {
     fn nonce(&self) -> u32 {
         self.inner.nonce
     }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner)).into()
+    }
 }
 
 #[pyproto]
@@ -152,8 +161,8 @@ impl PyScript {
         }
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        self.inner.as_bytes()
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, self.inner.as_bytes()).into()
     }
 }
 
@@ -173,16 +182,14 @@ pub struct PyTxId {
 #[pymethods]
 impl PyTxId {
     #[new]
-    pub fn new(data: Vec<u8>) -> PyResult<Self> {
-        if data.len() != 32 {
-            Err(exceptions::PyValueError::new_err(format!(
-                "Data must be 32-byte long"
-            )))
-        } else {
-            Ok(PyTxId {
-                inner: deserialize(&data).unwrap(),
-            })
+    pub fn new(data: [u8; 32]) -> Self {
+        PyTxId {
+            inner: deserialize(&data).unwrap(),
         }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner)).into()
     }
 }
 
@@ -211,11 +218,8 @@ impl PyOutPoint {
     }
 
     #[staticmethod]
-    pub fn from_bytes(txid: Vec<u8>, index: u16) -> PyResult<Self> {
-        match PyTxId::new(txid) {
-            Ok(x) => Ok(PyOutPoint::new(x, index)),
-            Err(e) => Err(e),
-        }
+    pub fn from_bytes(txid: [u8; 32], index: u16) -> Self {
+        PyOutPoint::new(PyTxId::new(txid), index)
     }
 
     #[getter]
@@ -230,6 +234,10 @@ impl PyOutPoint {
 
     pub fn to_channel_id(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &serialize(&self.inner.to_channel_id())).into()
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner.into_bitcoin_outpoint())).into()
     }
 }
 
@@ -249,9 +257,9 @@ pub struct PyTransaction {
 #[pymethods]
 impl PyTransaction {
     #[new]
-    pub fn new(data: Vec<u8>) -> Self {
+    pub fn new(data: &[u8]) -> Self {
         PyTransaction {
-            inner: deserialize(&data).unwrap(),
+            inner: deserialize(data).unwrap(),
         }
     }
 }
