@@ -10,6 +10,7 @@ use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
 use bitcoin::hash_types::Txid;
 use bitcoin::secp256k1::constants::{PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE};
 use bitcoin::secp256k1::key::{PublicKey, SecretKey};
+use bitcoin::secp256k1::Signature;
 
 use lightning::chain::transaction::OutPoint;
 
@@ -83,6 +84,12 @@ impl PyObjectProtocol for PyPublicKey {
     }
 }
 
+#[pyclass(name=Signature)]
+#[derive(Clone)]
+pub struct PySignature {
+    pub inner: Signature,
+}
+
 #[pyclass(name=BlockHeader)]
 pub struct PyBlockHeader {
     inner: BlockHeader,
@@ -148,6 +155,7 @@ impl PyObjectProtocol for PyBlockHeader {
 }
 
 #[pyclass(name=Script)]
+#[derive(Clone)]
 pub struct PyScript {
     pub inner: Script,
 }
@@ -201,6 +209,7 @@ impl PyObjectProtocol for PyTxId {
 }
 
 #[pyclass(name=OutPoint)]
+#[derive(Clone)]
 pub struct PyOutPoint {
     pub inner: OutPoint,
 }
