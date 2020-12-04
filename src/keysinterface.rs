@@ -14,6 +14,7 @@ use bitcoin::secp256k1::Secp256k1;
 use lightning::chain::keysinterface::{InMemoryChannelKeys, KeysManager};
 
 #[pyclass(name=InMemoryChannelKeys)]
+#[derive(Clone)]
 pub struct PyInMemoryChannelKeys {
     inner: InMemoryChannelKeys,
 }
