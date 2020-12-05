@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 
-use crate::binding_utils::process_python_return;
 use crate::primitives::PyTransaction;
+use crate::process_python_return;
 
 use bitcoin::blockdata::transaction::Transaction;
 
@@ -74,12 +74,4 @@ impl BroadcasterInterface for PyBroadcasterInterface {
     fn broadcast_transaction(&self, tx: &Transaction) {
         self.broadcast_transaction(PyTransaction { inner: tx.clone() })
     }
-}
-
-#[pymodule]
-/// Chain interface module for LDK.
-fn chaininterface(_: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<PyFeeEstimator>()?;
-    m.add_class::<PyBroadcasterInterface>()?;
-    Ok(())
 }

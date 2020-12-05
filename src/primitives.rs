@@ -279,15 +279,3 @@ impl PyObjectProtocol for PyTransaction {
         Ok(serialize_hex(&self.inner))
     }
 }
-
-#[pymodule]
-fn primitives(_: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<PySecretKey>()?;
-    m.add_class::<PyPublicKey>()?;
-    m.add_class::<PyBlockHeader>()?;
-    m.add_class::<PyScript>()?;
-    m.add_class::<PyTxId>()?;
-    m.add_class::<PyOutPoint>()?;
-    m.add_class::<PyTransaction>()?;
-    Ok(())
-}

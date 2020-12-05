@@ -1,7 +1,7 @@
 use pyo3::exceptions;
 use pyo3::prelude::*;
 
-use crate::channelmanager::PyPaymentHash;
+use crate::ln::channelmanager::PyPaymentHash;
 use crate::primitives::{PyPublicKey, PySignature, PyTransaction};
 
 use lightning::ln::chan_utils::{
@@ -134,11 +134,4 @@ impl PyHolderCommitmentTransaction {
             ),
         }
     }
-}
-
-#[pymodule]
-/// Keys manager module for LDK.
-fn chan_utils(_: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<PyChannelPublicKeys>()?;
-    Ok(())
 }

@@ -17,10 +17,3 @@ impl PyPaymentHash {
         }
     }
 }
-
-#[pymodule]
-/// Keys manager module for LDK.
-fn channel_manager(_: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<PyPaymentHash>()?;
-    Ok(())
-}

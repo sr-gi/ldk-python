@@ -1,4 +1,4 @@
-from ldk_python.logger import LDKLogger, ldk_test_logger_trait
+from ldk_python.logger import LDKLogger
 
 class Logger():
     def log(self, message, level):
@@ -67,11 +67,3 @@ def test_ldk_debug(capfd):
     ldk_out, _ = capfd.readouterr()
 
     assert inner_out == ldk_out
-
-
-def test_ldk_logger_trait(capfd):
-    message = "this is a test message"
-    ldk_test_logger_trait(ldk_logger, message)
-    ldk_out, _ = capfd.readouterr()
-
-    assert ldk_out == f"[DEBUG]: {message}\n"

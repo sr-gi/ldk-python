@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
 
 use lightning::util::logger::{Level, Logger, Record};
 
@@ -60,35 +59,4 @@ impl Logger for LDKLogger {
         let message = format!("{}", record.args);
         self.log(message, record.level.to_string())
     }
-}
-
-#[pymodule]
-/// Loggin module for LDK.
-fn logger(_: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<LDKLogger>()?;
-    m.add_function(wrap_pyfunction!(ldk_test_logger_trait, m)?)
-        .unwrap();
-    Ok(())
-}
-
-// Temorary tests, until we find a better place for them
-
-#[pyfunction]
-/// Function that can be called from Python to tests that the trait bounds work
-fn ldk_test_logger_trait(logger: LDKLogger, message: String) {
-    inner_test(
-        logger,
-        &Record::new(
-            Level::Debug,
-            format_args!("{}", message),
-            module_path!(),
-            file!(),
-            line!(),
-        ),
-    )
-}
-
-/// Actual test, should show the data in Python
-fn inner_test<L: Logger>(logger: L, r: &Record) {
-    logger.log(&r)
 }

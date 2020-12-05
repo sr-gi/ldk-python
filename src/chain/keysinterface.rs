@@ -4,7 +4,7 @@ use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
-use crate::chan_utils::PyChannelPublicKeys;
+use crate::ln::chan_utils::PyChannelPublicKeys;
 use crate::primitives::PySecretKey;
 
 use bitcoin::consensus::encode::serialize;
@@ -158,12 +158,4 @@ impl PyKeysManager {
             Err(e) => Err(e),
         }
     }
-}
-
-#[pymodule]
-/// Keys manager module for LDK.
-fn keysinterface(_: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<PyKeysManager>()?;
-    m.add_class::<PyInMemoryChannelKeys>()?;
-    Ok(())
 }
