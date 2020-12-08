@@ -9,7 +9,7 @@ pub mod primitives;
 
 pub fn process_python_return<'a, T: FromPyObject<'a>>(
     pyresult: PyResult<&'a PyAny>,
-) -> Result<T, PyErr> {
+) -> PyResult<T> {
     match pyresult {
         Ok(x) => {
             let inner: Option<T> = x.extract()?;
@@ -50,7 +50,14 @@ pub fn logger(_: Python, m: &PyModule) -> PyResult<()> {
 // CHAIN
 
 #[pymodule]
-/// Chain interface interface module for LDK
+/// Chain module for LDK
+fn chain(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<chain::PyWatch>()?;
+    Ok(())
+}
+
+#[pymodule]
+/// Chain interface module for LDK
 fn chaininterface(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<chain::chaininterface::PyFeeEstimator>()?;
     m.add_class::<chain::chaininterface::PyBroadcasterInterface>()?;
@@ -84,14 +91,30 @@ fn channelmanager(_: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+#[pymodule]
+/// Channel monitor module for LDK.
+fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add(
+        "TemporaryChannelMonitorUpdateErr",
+        py.get_type::<chain::channelmonitor::TemporaryChannelMonitorUpdateErr>(),
+    )?;
+    m.add(
+        "PermanentChannelMonitorUpdateErr",
+        py.get_type::<chain::channelmonitor::PermanentChannelMonitorUpdateErr>(),
+    )?;
+    Ok(())
+}
+
 /// LDK bindings for Python
 #[pymodule]
 fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(primitives))?;
     m.add_wrapped(wrap_pymodule!(logger))?;
+    m.add_wrapped(wrap_pymodule!(chain))?;
     m.add_wrapped(wrap_pymodule!(chaininterface))?;
     m.add_wrapped(wrap_pymodule!(keysinterface))?;
     m.add_wrapped(wrap_pymodule!(chan_utils))?;
     m.add_wrapped(wrap_pymodule!(channelmanager))?;
+    m.add_wrapped(wrap_pymodule!(channelmonitor))?;
     Ok(())
 }
