@@ -6,6 +6,8 @@ pub mod chain;
 pub mod ln;
 pub mod logger;
 pub mod primitives;
+pub mod routing;
+pub mod util;
 
 pub fn process_python_return<'a, T: FromPyObject<'a>>(
     pyresult: PyResult<&'a PyAny>,
@@ -105,6 +107,61 @@ fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+#[pymodule]
+/// Features module for LDK.
+fn features(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<ln::features::PyInitFeatures>()?;
+    m.add_class::<ln::features::PyChannelFeatures>()?;
+    m.add_class::<ln::features::PyNodeFeatures>()?;
+    Ok(())
+}
+
+// Routing
+
+#[pymodule]
+/// Router module for LDK.
+fn router(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<routing::router::PyRouteHop>()?;
+    m.add_class::<routing::router::PyRoute>()?;
+    Ok(())
+}
+
+// Util
+
+#[pymodule]
+/// Configuration module for LDK.
+fn config(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<util::config::PyChannelHandshakeConfig>()?;
+    m.add_class::<util::config::PyChannelHandshakeLimits>()?;
+    m.add_class::<util::config::PyChannelConfig>()?;
+    m.add_class::<util::config::PyUserConfig>()?;
+    Ok(())
+}
+
+#[pymodule]
+/// Errors module for LDK.
+fn errors(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add("APIError", py.get_type::<util::errors::APIError>())?;
+    m.add(
+        "APIMisuseError",
+        py.get_type::<util::errors::APIMisuseError>(),
+    )?;
+    m.add(
+        "FeeRateTooHigh",
+        py.get_type::<util::errors::FeeRateTooHigh>(),
+    )?;
+    m.add("RouteError", py.get_type::<util::errors::RouteError>())?;
+    m.add(
+        "ChannelUnavailable",
+        py.get_type::<util::errors::ChannelUnavailable>(),
+    )?;
+    m.add(
+        "MonitorUpdateFailed",
+        py.get_type::<util::errors::MonitorUpdateFailed>(),
+    )?;
+    Ok(())
+}
+
 /// LDK bindings for Python
 #[pymodule]
 fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
@@ -116,5 +173,8 @@ fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(chan_utils))?;
     m.add_wrapped(wrap_pymodule!(channelmanager))?;
     m.add_wrapped(wrap_pymodule!(channelmonitor))?;
+    m.add_wrapped(wrap_pymodule!(features))?;
+    m.add_wrapped(wrap_pymodule!(router))?;
+    m.add_wrapped(wrap_pymodule!(config))?;
     Ok(())
 }
