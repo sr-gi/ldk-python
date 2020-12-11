@@ -20,7 +20,23 @@ pub mod chaininterface;
 pub mod channelmonitor;
 pub mod keysinterface;
 
+pub fn process_python_monitor_return(result: PyResult<()>) -> Result<(), ChannelMonitorUpdateErr> {
+    Python::with_gil(|py| match result {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            if e.is_instance::<TemporaryChannelMonitorUpdateErr>(py) {
+                Err(ChannelMonitorUpdateErr::TemporaryFailure)
+            } else if e.is_instance::<PermanentChannelMonitorUpdateErr>(py) {
+                Err(ChannelMonitorUpdateErr::PermanentFailure)
+            } else {
+                panic!("Unrecorgnized ChannelMonitorUpdateErr")
+            }
+        }
+    })
+}
+
 #[pyclass(name=Watch)]
+#[derive(Clone)]
 pub struct PyWatch {
     inner: Py<PyAny>,
 }
@@ -91,21 +107,6 @@ impl PyWatch {
     }
 }
 
-fn process_python_watch_return(result: PyResult<()>) -> Result<(), ChannelMonitorUpdateErr> {
-    Python::with_gil(|py| match result {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            if e.is_instance::<TemporaryChannelMonitorUpdateErr>(py) {
-                Err(ChannelMonitorUpdateErr::TemporaryFailure)
-            } else if e.is_instance::<PermanentChannelMonitorUpdateErr>(py) {
-                Err(ChannelMonitorUpdateErr::PermanentFailure)
-            } else {
-                panic!("Unrecorgnized ChannelMonitorUpdateErr")
-            }
-        }
-    })
-}
-
 impl Watch for PyWatch {
     type Keys = InMemoryChannelKeys;
 
@@ -114,7 +115,7 @@ impl Watch for PyWatch {
         funding_txo: OutPoint,
         monitor: ChannelMonitor<Self::Keys>,
     ) -> Result<(), ChannelMonitorUpdateErr> {
-        process_python_watch_return(self.watch_channel(
+        process_python_monitor_return(self.watch_channel(
             PyOutPoint { inner: funding_txo },
             PyInMemoryKeysChannelMonitor { inner: monitor },
         ))
@@ -125,7 +126,7 @@ impl Watch for PyWatch {
         funding_txo: OutPoint,
         update: ChannelMonitorUpdate,
     ) -> Result<(), ChannelMonitorUpdateErr> {
-        process_python_watch_return(self.update_channel(
+        process_python_monitor_return(self.update_channel(
             PyOutPoint { inner: funding_txo },
             PyChannelMonitorUpdate { inner: update },
         ))
