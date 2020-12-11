@@ -8,8 +8,9 @@ use bitcoin::blockdata::transaction::Transaction;
 use lightning::chain::chaininterface::{BroadcasterInterface, ConfirmationTarget, FeeEstimator};
 
 #[pyclass(name=FeeEstimator)]
+#[derive(Clone)]
 pub struct PyFeeEstimator {
-    inner: Py<PyAny>,
+    pub inner: Py<PyAny>,
 }
 
 #[pymethods]
@@ -46,8 +47,9 @@ impl FeeEstimator for PyFeeEstimator {
 }
 
 #[pyclass(name=BroadcasterInterface)]
+#[derive(Clone)]
 pub struct PyBroadcasterInterface {
-    inner: Py<PyAny>,
+    pub inner: Py<PyAny>,
 }
 
 #[pymethods]

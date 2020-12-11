@@ -7,7 +7,7 @@ use lightning::util::logger::{Level, Logger, Record};
 #[derive(Clone)]
 /// Logger interface. The constructor requires a class implementing, at least, the ``log(message: str, level: str)`` method.
 pub struct LDKLogger {
-    inner: Py<PyAny>,
+    pub inner: Py<PyAny>,
 }
 
 #[pymethods]
