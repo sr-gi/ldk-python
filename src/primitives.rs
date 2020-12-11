@@ -8,6 +8,7 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
 use bitcoin::hash_types::Txid;
+use bitcoin::network::constants::Network;
 use bitcoin::secp256k1::constants::{PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE};
 use bitcoin::secp256k1::key::{PublicKey, SecretKey};
 use bitcoin::secp256k1::Signature;
@@ -277,5 +278,46 @@ impl PyTransaction {
 impl PyObjectProtocol for PyTransaction {
     fn __str__(&self) -> PyResult<String> {
         Ok(serialize_hex(&self.inner))
+    }
+}
+
+#[pyclass(name=Network)]
+#[derive(Clone)]
+pub struct PyNetwork {
+    pub inner: Network,
+}
+
+#[pymethods]
+impl PyNetwork {
+    #[staticmethod]
+    pub fn mainnet() -> Self {
+        PyNetwork {
+            inner: Network::Bitcoin,
+        }
+    }
+
+    #[staticmethod]
+    pub fn testnet() -> Self {
+        PyNetwork {
+            inner: Network::Testnet,
+        }
+    }
+
+    #[staticmethod]
+    pub fn regtest() -> Self {
+        PyNetwork {
+            inner: Network::Regtest,
+        }
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyNetwork {
+    fn __str__(&self) -> &str {
+        match self.inner {
+            Network::Bitcoin => "mainnet",
+            Network::Testnet => "testnet",
+            Network::Regtest => "regtest",
+        }
     }
 }

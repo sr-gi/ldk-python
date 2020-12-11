@@ -5,10 +5,9 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
 use crate::ln::chan_utils::PyChannelPublicKeys;
-use crate::primitives::PySecretKey;
+use crate::primitives::{PyNetwork, PySecretKey};
 
 use bitcoin::consensus::encode::serialize;
-use bitcoin::network::constants::Network;
 use bitcoin::secp256k1::Secp256k1;
 
 use lightning::chain::keysinterface::{InMemoryChannelKeys, KeysManager};
@@ -118,8 +117,9 @@ impl PyInMemoryChannelKeys {
 }
 
 #[pyclass(name=KeysManager)]
+#[derive(Clone)]
 pub struct PyKeysManager {
-    inner: KeysManager,
+    pub inner: KeysManager,
 }
 
 #[pymethods]
@@ -127,20 +127,10 @@ impl PyKeysManager {
     #[new]
     fn new(
         seed: &[u8],
-        network: &str,
+        network: PyNetwork,
         starting_time_secs: u64,
         starting_time_nanos: u32,
     ) -> PyResult<Self> {
-        let net = match network {
-            "bitcoin" => Ok(Network::Bitcoin),
-            "testnet" => Ok(Network::Testnet),
-            "regtest" => Ok(Network::Regtest),
-            _ => Err(exceptions::PyValueError::new_err(format!(
-                "Unrecognized network: {}",
-                network
-            ))),
-        };
-
         if seed.len() != 32 {
             return Err(exceptions::PyValueError::new_err(format!(
                 "Expected 32-byte seed, received a {}-byte one",
@@ -151,11 +141,8 @@ impl PyKeysManager {
         let mut s: [u8; 32] = Default::default();
         s.copy_from_slice(&seed[0..32]);
 
-        match net {
-            Ok(x) => Ok(PyKeysManager {
-                inner: KeysManager::new(&s, x, starting_time_secs, starting_time_nanos),
-            }),
-            Err(e) => Err(e),
-        }
+        Ok(PyKeysManager {
+            inner: KeysManager::new(&s, network.inner, starting_time_secs, starting_time_nanos),
+        })
     }
 }
