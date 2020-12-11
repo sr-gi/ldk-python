@@ -88,8 +88,32 @@ fn chan_utils(_: Python, m: &PyModule) -> PyResult<()> {
 
 #[pymodule]
 /// Channel manager module for LDK.
-fn channelmanager(_: Python, m: &PyModule) -> PyResult<()> {
+fn channelmanager(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<ln::channelmanager::PyPaymentPreimage>()?;
+    m.add_class::<ln::channelmanager::PyPaymentSecret>()?;
     m.add_class::<ln::channelmanager::PyPaymentHash>()?;
+    m.add_class::<ln::channelmanager::PyChannelDetails>()?;
+    m.add_class::<ln::channelmanager::PyChannelManager>()?;
+    m.add(
+        "PaymentSendFailure",
+        py.get_type::<ln::channelmanager::PaymentSendFailure>(),
+    )?;
+    m.add(
+        "ParameterError",
+        py.get_type::<ln::channelmanager::ParameterError>(),
+    )?;
+    m.add(
+        "PathParameterError",
+        py.get_type::<ln::channelmanager::PathParameterError>(),
+    )?;
+    m.add(
+        "AllFailedRetrySafe",
+        py.get_type::<ln::channelmanager::AllFailedRetrySafe>(),
+    )?;
+    m.add(
+        "PartialFailure",
+        py.get_type::<ln::channelmanager::PartialFailure>(),
+    )?;
     Ok(())
 }
 
