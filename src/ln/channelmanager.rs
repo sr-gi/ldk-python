@@ -13,7 +13,7 @@ use crate::util::config::PyUserConfig;
 use crate::util::errors::match_api_error;
 
 use lightning::chain::chaininterface::{BroadcasterInterface, FeeEstimator};
-use lightning::chain::keysinterface::{InMemoryChannelKeys, KeysManager};
+use lightning::chain::keysinterface::InMemoryChannelKeys;
 use lightning::ln::channelmanager as CM;
 use lightning::ln::channelmanager::{
     ChannelDetails, ChannelManager, PaymentHash, PaymentPreimage, PaymentSecret,
@@ -128,13 +128,13 @@ impl PyChannelDetails {
     }
 }
 
-#[pyclass(name=ChannelManager)]
+#[pyclass(unsendable, name=ChannelManager)]
 pub struct PyChannelManager {
     pub inner: ChannelManager<
         InMemoryChannelKeys,
         Box<PyWatch>,
         Box<dyn BroadcasterInterface>,
-        Box<KeysManager>,
+        PyKeysManager,
         Box<dyn FeeEstimator>,
         Box<dyn Logger>,
     >,
@@ -160,7 +160,7 @@ impl PyChannelManager {
                 Box::new(chain_monitor),
                 Box::new(tx_broadcaster),
                 Box::new(logger),
-                Box::new(keys_manager.inner),
+                keys_manager,
                 config.inner,
                 current_blockchain_height,
             ),
@@ -188,7 +188,7 @@ impl PyChannelManager {
             native_override_config,
         ) {
             Ok(_) => Ok(()),
-            Err(e) => Err(match_api_error(e)),
+            Err(e) => Err(match_api_error(&e)),
         }
     }
 
@@ -211,7 +211,7 @@ impl PyChannelManager {
     pub fn close_channel(&self, channel_id: [u8; 32]) -> PyResult<()> {
         match self.inner.close_channel(&channel_id) {
             Ok(_) => Ok(()),
-            Err(e) => Err(match_api_error(e)),
+            Err(e) => Err(match_api_error(&e)),
         }
     }
 
@@ -257,7 +257,7 @@ impl PyChannelManager {
         alias: [u8; 32],
         addresses: Vec<PyNetAddress>,
     ) {
-        let native_addresses = vec![];
+        let mut native_addresses = vec![];
         for address in addresses.into_iter() {
             native_addresses.push(address.inner)
         }

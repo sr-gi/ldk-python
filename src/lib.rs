@@ -133,7 +133,7 @@ fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
 
 #[pymodule]
 /// Features module for LDK.
-fn features(py: Python, m: &PyModule) -> PyResult<()> {
+fn features(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ln::features::PyInitFeatures>()?;
     m.add_class::<ln::features::PyChannelFeatures>()?;
     m.add_class::<ln::features::PyNodeFeatures>()?;
@@ -154,7 +154,7 @@ fn router(_: Python, m: &PyModule) -> PyResult<()> {
 
 #[pymodule]
 /// Configuration module for LDK.
-fn config(py: Python, m: &PyModule) -> PyResult<()> {
+fn config(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<util::config::PyChannelHandshakeConfig>()?;
     m.add_class::<util::config::PyChannelHandshakeLimits>()?;
     m.add_class::<util::config::PyChannelConfig>()?;

@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::panic;
 
 use pyo3::exceptions;
@@ -116,10 +117,18 @@ impl PyInMemoryChannelKeys {
     }
 }
 
-#[pyclass(name=KeysManager)]
+#[pyclass(unsendable, name=KeysManager)]
 #[derive(Clone)]
 pub struct PyKeysManager {
-    pub inner: KeysManager,
+    pub inner: *mut KeysManager,
+}
+
+impl Deref for PyKeysManager {
+    type Target = KeysManager;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.inner }
+    }
 }
 
 #[pymethods]
@@ -142,7 +151,12 @@ impl PyKeysManager {
         s.copy_from_slice(&seed[0..32]);
 
         Ok(PyKeysManager {
-            inner: KeysManager::new(&s, network.inner, starting_time_secs, starting_time_nanos),
+            inner: &mut KeysManager::new(
+                &s,
+                network.inner,
+                starting_time_secs,
+                starting_time_nanos,
+            ),
         })
     }
 }

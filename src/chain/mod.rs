@@ -48,7 +48,6 @@ impl PyWatch {
         PyWatch { inner: watch }
     }
 
-    // FIXME: change monitor type back to PyInMemoryKeysChannelMonitor
     fn watch_channel(
         &self,
         funding_txo: PyOutPoint,
@@ -115,9 +114,12 @@ impl Watch for PyWatch {
         funding_txo: OutPoint,
         monitor: ChannelMonitor<Self::Keys>,
     ) -> Result<(), ChannelMonitorUpdateErr> {
+        let mut mut_monitor = monitor;
         process_python_monitor_return(self.watch_channel(
             PyOutPoint { inner: funding_txo },
-            PyInMemoryKeysChannelMonitor { inner: monitor },
+            PyInMemoryKeysChannelMonitor {
+                inner: &mut mut_monitor,
+            },
         ))
     }
 

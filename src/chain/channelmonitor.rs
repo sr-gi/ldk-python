@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use pyo3::create_exception;
 use pyo3::prelude::*;
 
@@ -7,10 +9,18 @@ use crate::logger::LDKLogger;
 use lightning::chain::channelmonitor::{ChannelMonitor, ChannelMonitorUpdate, MonitorEvent};
 use lightning::chain::keysinterface::InMemoryChannelKeys;
 
-#[pyclass(name=InMemoryKeysChannelMonitor)]
+#[pyclass(unsendable, name=InMemoryKeysChannelMonitor)]
 #[derive(Clone)]
 pub struct PyInMemoryKeysChannelMonitor {
-    inner: ChannelMonitor<InMemoryChannelKeys>,
+    pub inner: *mut ChannelMonitor<InMemoryChannelKeys>,
+}
+
+impl Deref for PyInMemoryKeysChannelMonitor {
+    type Target = ChannelMonitor<InMemoryChannelKeys>;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.inner }
+    }
 }
 
 #[pymethods]
@@ -22,14 +32,16 @@ impl PyInMemoryKeysChannelMonitor {
         fee_estimator: PyFeeEstimator,
         logger: LDKLogger,
     ) -> PyResult<()> {
-        match self.inner.update_monitor(
-            &updates.inner,
-            &Box::new(broadcaster),
-            &Box::new(fee_estimator),
-            &Box::new(logger),
-        ) {
-            Ok(_) => Ok(()),
-            Err(e) => Err(MonitorUpdateErr::new_err(e.0)),
+        unsafe {
+            match self.inner.as_mut().unwrap().update_monitor(
+                &updates.inner,
+                &Box::new(broadcaster),
+                &Box::new(fee_estimator),
+                &Box::new(logger),
+            ) {
+                Ok(_) => Ok(()),
+                Err(e) => Err(MonitorUpdateErr::new_err(e.0)),
+            }
         }
     }
 }
@@ -43,7 +55,7 @@ create_exception!(
 #[pyclass(name=ChannelMonitorUpdate)]
 #[derive(Clone)]
 pub struct PyChannelMonitorUpdate {
-    inner: ChannelMonitorUpdate,
+    pub inner: ChannelMonitorUpdate,
 }
 
 create_exception!(
