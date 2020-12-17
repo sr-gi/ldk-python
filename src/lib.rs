@@ -9,6 +9,20 @@ pub mod primitives;
 pub mod routing;
 pub mod util;
 
+pub fn has_trait_bound(class: &Py<PyAny>, methods: Vec<&str>) -> bool {
+    let mut results = vec![];
+    Python::with_gil(|py| {
+        for method in methods.into_iter() {
+            let is_callable = match class.as_ref(py).getattr(method) {
+                Ok(x) => x.is_callable(),
+                Err(_) => false,
+            };
+            results.push(is_callable);
+        }
+    });
+    results.iter().all(|&x| x == true)
+}
+
 pub fn process_python_return<'a, T: FromPyObject<'a>>(
     pyresult: PyResult<&'a PyAny>,
 ) -> PyResult<T> {
