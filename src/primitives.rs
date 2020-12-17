@@ -131,6 +131,15 @@ impl PySignature {
             Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
         }
     }
+
+    #[staticmethod]
+    fn from_compact(data: &[u8]) -> PyResult<Self> {
+        match secp256k1::Signature::from_compact(data) {
+            Ok(x) => Ok(PySignature { inner: x }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
+        }
+    }
+
     fn serialize_der(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.serialize_der()).into()
     }
