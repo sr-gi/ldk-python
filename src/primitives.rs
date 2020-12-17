@@ -8,10 +8,12 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
 use bitcoin::hash_types::Txid;
+use bitcoin::hashes::Hash;
+use bitcoin::hashes::sha256;
 use bitcoin::network::constants::Network;
+use bitcoin::secp256k1;
 use bitcoin::secp256k1::constants::{PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE};
 use bitcoin::secp256k1::key::{PublicKey, SecretKey};
-use bitcoin::secp256k1::Signature;
 
 use lightning::chain::transaction::OutPoint;
 
@@ -34,6 +36,15 @@ impl PySecretKey {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner[..]).into()
+    }
+
+    fn sign(&self, message: String) -> PyResult<PySignature> {
+        let message_hash = sha256::Hash::hash(message.as_bytes());
+        let message_hash = secp256k1::Message::from_slice(&message_hash);
+        match message_hash {
+            Ok(x) => Ok(PySignature{inner: secp256k1::Secp256k1::new().sign(&x, &self.inner)}),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))), 
+        }
     }
 }
 
@@ -68,6 +79,26 @@ impl PyPublicKey {
         }
     }
 
+    #[staticmethod]
+    pub fn from_secret_key(sk: PySecretKey) -> Self {
+        PyPublicKey {
+            inner: PublicKey::from_secret_key(&secp256k1::Secp256k1::signing_only(), &sk.inner),
+        }
+    }
+
+    fn verify(&self, message: String, signature: PySignature) -> PyResult<bool> {
+        let message_hash = sha256::Hash::hash(message.as_bytes());
+        let message_hash = secp256k1::Message::from_slice(&message_hash);
+        
+        match message_hash {
+            Ok(x) => {match secp256k1::Secp256k1::new().verify(&x, &signature.inner, &self.inner) {
+                Ok(_) => Ok(true),
+                Err(_) => Ok(false)
+            }},
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))), 
+        }
+    }
+
     #[args(compressed = "true")]
     fn serialize(&self, py: Python, compressed: bool) -> Py<PyBytes> {
         if compressed {
@@ -88,7 +119,31 @@ impl PyObjectProtocol for PyPublicKey {
 #[pyclass(name=Signature)]
 #[derive(Clone)]
 pub struct PySignature {
-    pub inner: Signature,
+    pub inner: secp256k1::Signature,
+}
+
+#[pymethods]
+impl PySignature {
+    #[new]
+    fn new(data: &[u8]) -> PyResult<Self> {
+        match secp256k1::Signature::from_der(data) {
+            Ok(x) => Ok(PySignature { inner: x }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
+        }
+    }
+    fn serialize_der(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.serialize_der()).into()
+    }
+    fn serialize_compact(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.serialize_compact()).into()
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PySignature {
+    fn __str__(&self) -> PyResult<String> {
+        Ok(format!("{}", self.inner))
+    }
 }
 
 #[pyclass(name=BlockHeader)]
@@ -267,9 +322,13 @@ pub struct PyTransaction {
 #[pymethods]
 impl PyTransaction {
     #[new]
-    pub fn new(data: &[u8]) -> Self {
-        PyTransaction {
-            inner: deserialize(data).unwrap(),
+    pub fn new(data: &[u8]) -> PyResult<Self> {
+        match deserialize(data) {
+            Ok(x) => Ok(PyTransaction { inner: x }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!(
+                "Cannot build transaction, {}",
+                e
+            ))),
         }
     }
 }
