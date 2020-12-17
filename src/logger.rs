@@ -1,4 +1,7 @@
+use pyo3::exceptions;
 use pyo3::prelude::*;
+
+use crate::has_trait_bound;
 
 use lightning::util::logger::{Level, Logger, Record};
 
@@ -13,8 +16,14 @@ pub struct LDKLogger {
 #[pymethods]
 impl LDKLogger {
     #[new]
-    fn new(logger: Py<PyAny>) -> Self {
-        LDKLogger { inner: logger }
+    fn new(logger: Py<PyAny>) -> PyResult<Self> {
+        if has_trait_bound(&logger, vec!["log"]) {
+            Ok(LDKLogger { inner: logger })
+        } else {
+            Err(exceptions::PyTypeError::new_err(format!(
+                "Not all required methods are implemented by Logger"
+            )))
+        }
     }
 
     #[text_signature = "($self, record, level)"]
