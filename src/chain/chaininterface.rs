@@ -1,7 +1,8 @@
+use pyo3::exceptions;
 use pyo3::prelude::*;
 
 use crate::primitives::PyTransaction;
-use crate::process_python_return;
+use crate::{has_trait_bound, process_python_return};
 
 use bitcoin::blockdata::transaction::Transaction;
 
@@ -16,9 +17,15 @@ pub struct PyFeeEstimator {
 #[pymethods]
 impl PyFeeEstimator {
     #[new]
-    fn new(fee_estimator: Py<PyAny>) -> Self {
-        PyFeeEstimator {
-            inner: fee_estimator,
+    fn new(fee_estimator: Py<PyAny>) -> PyResult<Self> {
+        if has_trait_bound(&fee_estimator, vec!["get_est_sat_per_1000_weight"]) {
+            Ok(PyFeeEstimator {
+                inner: fee_estimator,
+            })
+        } else {
+            Err(exceptions::PyTypeError::new_err(format!(
+                "Not all required methods are implemented by FeeEstimator"
+            )))
         }
     }
 
@@ -55,9 +62,15 @@ pub struct PyBroadcasterInterface {
 #[pymethods]
 impl PyBroadcasterInterface {
     #[new]
-    fn new(broadcaster_interface: Py<PyAny>) -> Self {
-        PyBroadcasterInterface {
-            inner: broadcaster_interface,
+    fn new(broadcaster_interface: Py<PyAny>) -> PyResult<Self> {
+        if has_trait_bound(&broadcaster_interface, vec!["broadcast_transaction"]) {
+            Ok(PyBroadcasterInterface {
+                inner: broadcaster_interface,
+            })
+        } else {
+            Err(exceptions::PyTypeError::new_err(format!(
+                "Not all required methods are implemented by BroadcasterInterface"
+            )))
         }
     }
 
