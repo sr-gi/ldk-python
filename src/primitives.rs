@@ -1,3 +1,5 @@
+use std::str;
+
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
@@ -5,11 +7,12 @@ use pyo3::PyObjectProtocol;
 
 use bitcoin::blockdata::block::BlockHeader;
 use bitcoin::blockdata::script::Script;
+use bitcoin::blockdata::transaction::OutPoint as BitcoinOutPoint;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
 use bitcoin::hash_types::Txid;
-use bitcoin::hashes::Hash;
 use bitcoin::hashes::sha256;
+use bitcoin::hashes::Hash;
 use bitcoin::network::constants::Network;
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::constants::{PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE};
@@ -42,8 +45,10 @@ impl PySecretKey {
         let message_hash = sha256::Hash::hash(message.as_bytes());
         let message_hash = secp256k1::Message::from_slice(&message_hash);
         match message_hash {
-            Ok(x) => Ok(PySignature{inner: secp256k1::Secp256k1::new().sign(&x, &self.inner)}),
-            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))), 
+            Ok(x) => Ok(PySignature {
+                inner: secp256k1::Secp256k1::new().sign(&x, &self.inner),
+            }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
         }
     }
 }
@@ -89,13 +94,12 @@ impl PyPublicKey {
     fn verify(&self, message: String, signature: PySignature) -> PyResult<bool> {
         let message_hash = sha256::Hash::hash(message.as_bytes());
         let message_hash = secp256k1::Message::from_slice(&message_hash);
-        
         match message_hash {
-            Ok(x) => {match secp256k1::Secp256k1::new().verify(&x, &signature.inner, &self.inner) {
+            Ok(x) => match secp256k1::Secp256k1::new().verify(&x, &signature.inner, &self.inner) {
                 Ok(_) => Ok(true),
-                Err(_) => Ok(false)
-            }},
-            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))), 
+                Err(_) => Ok(false),
+            },
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
         }
     }
 
@@ -234,13 +238,15 @@ impl PyScript {
         }
     }
 
+    // Serialize prepends the length to the Script
     fn serialize(&self, py: Python) -> Py<PyBytes> {
-        PyBytes::new(py, self.inner.as_bytes()).into()
+        PyBytes::new(py, &serialize(&self.inner)).into()
     }
 }
 
 #[pyproto]
 impl PyObjectProtocol for PyScript {
+    // str prepends the length to the Script
     fn __str__(&self) -> PyResult<String> {
         Ok(serialize_hex(&self.inner))
     }
@@ -292,8 +298,17 @@ impl PyOutPoint {
     }
 
     #[staticmethod]
-    pub fn from_bytes(txid: [u8; 32], index: u16) -> Self {
-        PyOutPoint::new(PyTxId::new(txid), index)
+    pub fn from_bytes(data: &[u8]) -> PyResult<Self> {
+        if data.len() != 36 {
+            return Err(exceptions::PyValueError::new_err(format!(
+                "Outpoint data must be 36-bytes long"
+            )));
+        }
+
+        match deserialize::<BitcoinOutPoint>(data) {
+            Ok(x) => Ok(PyOutPoint::new(PyTxId { inner: x.txid }, x.vout as u16)),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
+        }
     }
 
     #[getter]
