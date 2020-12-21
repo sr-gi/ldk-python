@@ -343,3 +343,18 @@ def test_serialize(tx):
 
 def test_str(tx):
     assert str(Transaction.from_bytes(tx)) == tx.hex()
+
+
+# TEST NETWORK
+
+
+def test_mainnet():
+    assert str(Network.mainnet()) == "mainnet"
+
+
+def test_testnet():
+    assert str(Network.testnet()) == "testnet"
+
+
+def test_regtest():
+    assert str(Network.regtest()) == "regtest"

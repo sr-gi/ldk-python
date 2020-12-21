@@ -10,3 +10,4 @@ OutPoint = primitives.OutPoint
 TxIn = primitives.TxIn
 TxOut = primitives.TxOut
 Transaction = primitives.Transaction
+Network = primitives.Network

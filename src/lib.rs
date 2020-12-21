@@ -55,6 +55,7 @@ fn primitives(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<primitives::PyTxIn>()?;
     m.add_class::<primitives::PyTxOut>()?;
     m.add_class::<primitives::PyTransaction>()?;
+    m.add_class::<primitives::PyNetwork>()?;
     Ok(())
 }
 
