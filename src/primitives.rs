@@ -8,7 +8,7 @@ use pyo3::PyObjectProtocol;
 use bitcoin::blockdata::block::BlockHeader;
 use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::OutPoint as BitcoinOutPoint;
-use bitcoin::blockdata::transaction::Transaction;
+use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
 use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
 use bitcoin::hash_types::Txid;
 use bitcoin::hashes::sha256;
@@ -334,6 +334,134 @@ impl PyOutPoint {
 impl PyObjectProtocol for PyOutPoint {
     fn __str__(&self) -> PyResult<String> {
         Ok(serialize_hex(&self.inner.into_bitcoin_outpoint()))
+    }
+}
+
+#[pyclass(name=TxIn)]
+#[derive(Clone)]
+pub struct PyTxIn {
+    pub inner: TxIn,
+}
+
+#[pymethods]
+impl PyTxIn {
+    #[new]
+    fn new(
+        previous_output: PyOutPoint,
+        script_sig: PyScript,
+        sequence: u32,
+        witness: Vec<Vec<u8>>,
+    ) -> Self {
+        PyTxIn {
+            inner: TxIn {
+                previous_output: previous_output.inner.into_bitcoin_outpoint(),
+                script_sig: script_sig.inner,
+                sequence,
+                witness,
+            },
+        }
+    }
+
+    #[staticmethod]
+    /// Note that the witness field is *not* deserialized with the rest of the TxIn. Data must be provided without witness.
+    fn from_bytes(data: &[u8]) -> PyResult<Self> {
+        match deserialize::<TxIn>(data) {
+            Ok(x) => Ok(PyTxIn { inner: x }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
+        }
+    }
+
+    #[getter]
+    fn previous_output(&self) -> PyOutPoint {
+        PyOutPoint {
+            inner: OutPoint {
+                txid: self.inner.previous_output.txid,
+                index: self.inner.previous_output.vout as u16,
+            },
+        }
+    }
+
+    #[getter]
+    fn script_sig(&self) -> PyScript {
+        PyScript {
+            inner: self.inner.script_sig.clone(),
+        }
+    }
+
+    #[getter]
+    fn sequence(&self) -> u32 {
+        self.inner.sequence
+    }
+
+    #[getter]
+    fn witness(&self, py: Python) -> Vec<Py<PyBytes>> {
+        let mut w = vec![];
+        for witness in self.inner.witness.iter() {
+            w.push(PyBytes::new(py, &witness).into())
+        }
+        w
+    }
+
+    /// Note that the witness field is *not* serialized with the rest of the TxIn.
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner)).into()
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyTxIn {
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serialize_hex(&self.inner))
+    }
+}
+
+#[pyclass(name=TxOut)]
+#[derive(Clone)]
+pub struct PyTxOut {
+    pub inner: TxOut,
+}
+
+#[pymethods]
+impl PyTxOut {
+    #[new]
+    fn new(value: u64, script_pubkey: PyScript) -> Self {
+        PyTxOut {
+            inner: TxOut {
+                value,
+                script_pubkey: script_pubkey.inner,
+            },
+        }
+    }
+
+    #[staticmethod]
+    fn from_bytes(data: &[u8]) -> PyResult<Self> {
+        match deserialize::<TxOut>(data) {
+            Ok(x) => Ok(PyTxOut { inner: x }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
+        }
+    }
+
+    #[getter]
+    fn value(&self) -> u64 {
+        self.inner.value
+    }
+
+    #[getter]
+    fn script_pubkey(&self) -> PyScript {
+        PyScript {
+            inner: self.inner.script_pubkey.clone(),
+        }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner)).into()
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyTxOut {
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serialize_hex(&self.inner))
     }
 }
 

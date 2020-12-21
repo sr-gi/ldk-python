@@ -234,3 +234,71 @@ def test_outpoint_serialize():
 def test_outpoint_str():
     outpoint = get_random_bytes(36)
     assert str(OutPoint.from_bytes(outpoint)) == outpoint.hex()[:68] + "0000"
+
+
+# TXIN TESTS
+
+
+def test_txin_init():
+    prev_out = OutPoint(TxId(get_random_bytes(32)), 42)
+    script_sig = Script(get_random_bytes(120))
+    sequence = 0
+    witness = [get_random_bytes(72), get_random_bytes(73)]
+
+    assert isinstance(TxIn(prev_out, script_sig, sequence, witness), TxIn)
+
+
+def test_txin_from_bytes(txin):
+    assert isinstance(TxIn.from_bytes(txin), TxIn)
+
+
+def test_txin_getters():
+    prev_out = OutPoint(TxId(get_random_bytes(32)), 42)
+    script_sig = Script(get_random_bytes(120))
+    sequence = pow(2, 16) - 1
+    witness = [get_random_bytes(72), get_random_bytes(73)]
+    txin = TxIn(prev_out, script_sig, sequence, witness)
+
+    assert txin.previous_output.serialize() == prev_out.serialize()
+    assert txin.script_sig.serialize() == script_sig.serialize()
+    assert txin.sequence == sequence
+    assert txin.witness == witness
+
+
+def test_txin_serialize(txin):
+    assert TxIn.from_bytes(txin).serialize() == txin
+
+
+def test_txin_str(txin):
+    assert str(TxIn.from_bytes(txin)) == txin.hex()
+
+
+# TXOUT TESTS
+
+
+def test_txout_init():
+    value = pow(2, 64) - 15
+    script_pubkey = Script(get_random_bytes(80))
+
+    assert isinstance(TxOut(value, script_pubkey), TxOut)
+
+
+def test_txout_from_bytes(txout):
+    assert isinstance(TxOut.from_bytes(txout), TxOut)
+
+
+def test_txout_getters():
+    value = pow(2, 64) - 15
+    script_pubkey = Script(get_random_bytes(80))
+    txout = TxOut(value, script_pubkey)
+
+    assert txout.value == value
+    assert txout.script_pubkey.serialize() == script_pubkey.serialize()
+
+
+def test_txout_serialize(txout):
+    assert TxOut.from_bytes(txout).serialize() == txout
+
+
+def test_txout_str(txout):
+    assert str(TxOut.from_bytes(txout)) == txout.hex()
