@@ -84,6 +84,20 @@ fn chaininterface(_: Python, m: &PyModule) -> PyResult<()> {
 }
 
 #[pymodule]
+/// Channel monitor module for LDK.
+fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add(
+        "TemporaryChannelMonitorUpdateErr",
+        py.get_type::<chain::channelmonitor::TemporaryChannelMonitorUpdateErr>(),
+    )?;
+    m.add(
+        "PermanentChannelMonitorUpdateErr",
+        py.get_type::<chain::channelmonitor::PermanentChannelMonitorUpdateErr>(),
+    )?;
+    Ok(())
+}
+
+#[pymodule]
 /// Keys manager module for LDK
 fn keysinterface(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<chain::keysinterface::PyKeysManager>()?;
@@ -135,25 +149,18 @@ fn channelmanager(py: Python, m: &PyModule) -> PyResult<()> {
 }
 
 #[pymodule]
-/// Channel monitor module for LDK.
-fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add(
-        "TemporaryChannelMonitorUpdateErr",
-        py.get_type::<chain::channelmonitor::TemporaryChannelMonitorUpdateErr>(),
-    )?;
-    m.add(
-        "PermanentChannelMonitorUpdateErr",
-        py.get_type::<chain::channelmonitor::PermanentChannelMonitorUpdateErr>(),
-    )?;
-    Ok(())
-}
-
-#[pymodule]
 /// Features module for LDK.
 fn features(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ln::features::PyInitFeatures>()?;
     m.add_class::<ln::features::PyChannelFeatures>()?;
     m.add_class::<ln::features::PyNodeFeatures>()?;
+    Ok(())
+}
+
+#[pymodule]
+/// Messages module for LDK.
+fn msgs(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<ln::msgs::PyNetAddress>()?;
     Ok(())
 }
 
@@ -210,12 +217,14 @@ fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(logger))?;
     m.add_wrapped(wrap_pymodule!(chain))?;
     m.add_wrapped(wrap_pymodule!(chaininterface))?;
+    m.add_wrapped(wrap_pymodule!(channelmonitor))?;
     m.add_wrapped(wrap_pymodule!(keysinterface))?;
     m.add_wrapped(wrap_pymodule!(chan_utils))?;
     m.add_wrapped(wrap_pymodule!(channelmanager))?;
-    m.add_wrapped(wrap_pymodule!(channelmonitor))?;
     m.add_wrapped(wrap_pymodule!(features))?;
+    m.add_wrapped(wrap_pymodule!(msgs))?;
     m.add_wrapped(wrap_pymodule!(router))?;
     m.add_wrapped(wrap_pymodule!(config))?;
+    m.add_wrapped(wrap_pymodule!(errors))?;
     Ok(())
 }
