@@ -302,3 +302,44 @@ def test_txout_serialize(txout):
 
 def test_txout_str(txout):
     assert str(TxOut.from_bytes(txout)) == txout.hex()
+
+
+def test_transaction_init(txin, txout):
+    version = 1
+    lock_time = 0
+    ins = [TxIn.from_bytes(txin)]
+    outs = [TxOut.from_bytes(txout)]
+    assert isinstance(Transaction(version, lock_time, ins, outs), Transaction)
+
+
+def test_transaction_from_bytes(tx):
+    assert isinstance(Transaction.from_bytes(tx), Transaction)
+
+
+def test_transaction_getters(txin, txout):
+    version = 1
+    lock_time = 0
+    ins = [TxIn.from_bytes(txin)]
+    outs = [TxOut.from_bytes(txout)]
+
+    tx = Transaction(version, lock_time, ins, outs)
+
+    assert tx.version == version
+    assert tx.lock_time == lock_time
+
+    for i, local_i in zip(tx.input, ins):
+        assert i.serialize() == local_i.serialize()
+
+    for o, local_o in zip(tx.output, outs):
+        assert o.serialize() == local_o.serialize()
+
+
+# The rest of the exposed transaction functionality is not tested, we're only doing blackbox testing here.
+
+
+def test_serialize(tx):
+    assert Transaction.from_bytes(tx).serialize() == tx
+
+
+def test_str(tx):
+    assert str(Transaction.from_bytes(tx)) == tx.hex()

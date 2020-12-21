@@ -474,7 +474,29 @@ pub struct PyTransaction {
 #[pymethods]
 impl PyTransaction {
     #[new]
-    pub fn new(data: &[u8]) -> PyResult<Self> {
+    fn new(version: i32, lock_time: u32, input: Vec<PyTxIn>, output: Vec<PyTxOut>) -> Self {
+        let mut ins = vec![];
+        for i in input.iter() {
+            ins.push(i.inner.clone())
+        }
+
+        let mut outs = vec![];
+        for o in output.iter() {
+            outs.push(o.inner.clone())
+        }
+
+        PyTransaction {
+            inner: Transaction {
+                version,
+                lock_time,
+                input: ins,
+                output: outs,
+            },
+        }
+    }
+
+    #[staticmethod]
+    fn from_bytes(data: &[u8]) -> PyResult<Self> {
         match deserialize(data) {
             Ok(x) => Ok(PyTransaction { inner: x }),
             Err(e) => Err(exceptions::PyValueError::new_err(format!(
@@ -483,6 +505,64 @@ impl PyTransaction {
             ))),
         }
     }
+
+    #[getter]
+    fn version(&self) -> i32 {
+        self.inner.version
+    }
+
+    #[getter]
+    fn lock_time(&self) -> u32 {
+        self.inner.lock_time
+    }
+
+    #[getter]
+    fn input(&self) -> Vec<PyTxIn> {
+        let mut ins = vec![];
+        for i in self.inner.input.iter() {
+            ins.push(PyTxIn { inner: i.clone() })
+        }
+        ins
+    }
+
+    #[getter]
+    fn output(&self) -> Vec<PyTxOut> {
+        let mut outs = vec![];
+        for o in self.inner.output.iter() {
+            outs.push(PyTxOut { inner: o.clone() })
+        }
+        outs
+    }
+
+    fn txid(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner.txid())).into()
+    }
+
+    fn nxid(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner.ntxid())).into()
+    }
+
+    fn wxid(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner.wtxid())).into()
+    }
+
+    fn get_size(&self) -> usize {
+        self.inner.get_size()
+    }
+
+    fn get_weight(&self) -> usize {
+        self.inner.get_weight()
+    }
+
+    fn is_coinbase(&self) -> bool {
+        self.inner.is_coin_base()
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner)).into()
+    }
+
+    // FIXME: Missing methods: signature_hash, verify,
 }
 
 #[pyproto]
