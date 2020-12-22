@@ -66,3 +66,23 @@ def get_random_compact_signature():
     # The recoverable signature is a compact signature with trailing recovery
     # byte. The trailing byte is removed since it is not expected by the constructor
     return sk.sign_recoverable(message)[:-1]
+
+
+def get_random_net_addr(addr_type):
+    types = ["ipv4", "ipv6", "onionv2", "onionv3"]
+
+    if addr_type not in types:
+        raise ValueError("Unrecognized address type")
+
+    if addr_type == types[0]:
+        addr = get_random_bytes(4)
+    elif addr_type == types[1]:
+        addr = get_random_bytes(16)
+    elif addr_type == types[2]:
+        addr = get_random_bytes(10)
+    else:
+        addr = get_random_bytes(32)
+
+    port = int.from_bytes(get_random_bytes(2), "big")
+
+    return addr, port
