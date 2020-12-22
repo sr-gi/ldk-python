@@ -1,5 +1,6 @@
 use pyo3::create_exception;
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 
 use crate::chain::chaininterface::{PyBroadcasterInterface, PyFeeEstimator};
 use crate::chain::keysinterface::PyKeysManager;
@@ -89,6 +90,10 @@ impl PyPaymentHash {
         PyPaymentHash {
             inner: PaymentHash(data),
         }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.0).into()
     }
 }
 
