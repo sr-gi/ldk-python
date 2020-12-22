@@ -55,8 +55,8 @@ impl PySecretKey {
 
 #[pyproto]
 impl PyObjectProtocol for PySecretKey {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(format!("{:#x}", self.inner))
+    fn __str__(&self) -> String {
+        format!("{:#x}", self.inner)
     }
 }
 
@@ -115,8 +115,8 @@ impl PyPublicKey {
 
 #[pyproto]
 impl PyObjectProtocol for PyPublicKey {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(format!("{:#x}", self.inner))
+    fn __str__(&self) -> String {
+        format!("{:#x}", self.inner)
     }
 }
 
@@ -154,8 +154,8 @@ impl PySignature {
 
 #[pyproto]
 impl PyObjectProtocol for PySignature {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(format!("{}", self.inner))
+    fn __str__(&self) -> String {
+        format!("{}", self.inner)
     }
 }
 
@@ -218,8 +218,8 @@ impl PyBlockHeader {
 
 #[pyproto]
 impl PyObjectProtocol for PyBlockHeader {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(serialize_hex(&self.inner))
+    fn __str__(&self) -> String {
+        serialize_hex(&self.inner)
     }
 }
 
@@ -247,8 +247,8 @@ impl PyScript {
 #[pyproto]
 impl PyObjectProtocol for PyScript {
     // str prepends the length to the Script
-    fn __str__(&self) -> PyResult<String> {
-        Ok(serialize_hex(&self.inner))
+    fn __str__(&self) -> String {
+        serialize_hex(&self.inner)
     }
 }
 
@@ -274,8 +274,8 @@ impl PyTxId {
 
 #[pyproto]
 impl PyObjectProtocol for PyTxId {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(serialize_hex(&self.inner))
+    fn __str__(&self) -> String {
+        serialize_hex(&self.inner)
     }
 }
 
@@ -332,8 +332,8 @@ impl PyOutPoint {
 
 #[pyproto]
 impl PyObjectProtocol for PyOutPoint {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(serialize_hex(&self.inner.into_bitcoin_outpoint()))
+    fn __str__(&self) -> String {
+        serialize_hex(&self.inner.into_bitcoin_outpoint())
     }
 }
 
@@ -410,8 +410,8 @@ impl PyTxIn {
 
 #[pyproto]
 impl PyObjectProtocol for PyTxIn {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(serialize_hex(&self.inner))
+    fn __str__(&self) -> String {
+        serialize_hex(&self.inner)
     }
 }
 
@@ -460,8 +460,8 @@ impl PyTxOut {
 
 #[pyproto]
 impl PyObjectProtocol for PyTxOut {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(serialize_hex(&self.inner))
+    fn __str__(&self) -> String {
+        serialize_hex(&self.inner)
     }
 }
 
@@ -567,8 +567,8 @@ impl PyTransaction {
 
 #[pyproto]
 impl PyObjectProtocol for PyTransaction {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(serialize_hex(&self.inner))
+    fn __str__(&self) -> String {
+        serialize_hex(&self.inner)
     }
 }
 
