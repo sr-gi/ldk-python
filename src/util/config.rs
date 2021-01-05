@@ -29,6 +29,21 @@ impl PyChannelHandshakeConfig {
             inner: ChannelHandshakeConfig::default(),
         }
     }
+
+    #[getter]
+    fn minimum_depth(&self) -> u32 {
+        self.inner.minimum_depth
+    }
+
+    #[getter]
+    fn our_to_self_delay(&self) -> u16 {
+        self.inner.our_to_self_delay
+    }
+
+    #[getter]
+    fn our_htlc_minimum_msat(&self) -> u64 {
+        self.inner.our_htlc_minimum_msat
+    }
 }
 
 #[pyclass(name=ChannelHandshakeLimits)]
@@ -74,6 +89,56 @@ impl PyChannelHandshakeLimits {
             inner: ChannelHandshakeLimits::default(),
         }
     }
+
+    #[getter]
+    fn min_funding_satoshis(&self) -> u64 {
+        self.inner.min_funding_satoshis
+    }
+
+    #[getter]
+    fn max_htlc_minimum_msat(&self) -> u64 {
+        self.inner.max_htlc_minimum_msat
+    }
+
+    #[getter]
+    fn min_max_htlc_value_in_flight_msat(&self) -> u64 {
+        self.inner.min_max_htlc_value_in_flight_msat
+    }
+
+    #[getter]
+    fn max_channel_reserve_satoshis(&self) -> u64 {
+        self.inner.max_channel_reserve_satoshis
+    }
+
+    #[getter]
+    fn min_max_accepted_htlcs(&self) -> u16 {
+        self.inner.min_max_accepted_htlcs
+    }
+
+    #[getter]
+    fn min_dust_limit_satoshis(&self) -> u64 {
+        self.inner.min_dust_limit_satoshis
+    }
+
+    #[getter]
+    fn max_dust_limit_satoshis(&self) -> u64 {
+        self.inner.max_dust_limit_satoshis
+    }
+
+    #[getter]
+    fn max_minimum_depth(&self) -> u32 {
+        self.inner.max_minimum_depth
+    }
+
+    #[getter]
+    fn force_announced_channel_preference(&self) -> bool {
+        self.inner.force_announced_channel_preference
+    }
+
+    #[getter]
+    fn their_to_self_delay(&self) -> u16 {
+        self.inner.their_to_self_delay
+    }
 }
 
 #[pyclass(name=ChannelConfig)]
@@ -105,6 +170,21 @@ impl PyChannelConfig {
             inner: ChannelConfig::default(),
         }
     }
+
+    #[getter]
+    fn fee_proportional_millionths(&self) -> u32 {
+        self.inner.fee_proportional_millionths
+    }
+
+    #[getter]
+    fn announced_channel(&self) -> bool {
+        self.inner.announced_channel
+    }
+
+    #[getter]
+    fn commit_upfront_shutdown_pubkey(&self) -> bool {
+        self.inner.commit_upfront_shutdown_pubkey
+    }
 }
 
 #[pyclass(name=UserConfig)]
@@ -134,6 +214,28 @@ impl PyUserConfig {
     pub fn default() -> PyUserConfig {
         PyUserConfig {
             inner: UserConfig::default(),
+        }
+    }
+
+    #[getter]
+    fn own_channel_config(&self) -> PyChannelHandshakeConfig {
+        PyChannelHandshakeConfig {
+            // FIXME: Remove clone once #769 is merged
+            inner: self.inner.own_channel_config.clone(),
+        }
+    }
+
+    #[getter]
+    fn peer_channel_config_limits(&self) -> PyChannelHandshakeLimits {
+        PyChannelHandshakeLimits {
+            inner: self.inner.peer_channel_config_limits,
+        }
+    }
+
+    #[getter]
+    fn channel_options(&self) -> PyChannelConfig {
+        PyChannelConfig {
+            inner: self.inner.channel_options,
         }
     }
 }
