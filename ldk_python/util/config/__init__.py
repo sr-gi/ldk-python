@@ -1,4 +1,4 @@
-from ..ldk_python import config
+from .. import config
 
 ChannelHandshakeConfig = config.ChannelHandshakeConfig
 ChannelHandshakeLimits = config.ChannelHandshakeLimits

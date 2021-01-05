@@ -1,4 +1,4 @@
-from ..ldk_python import errors
+from .. import errors
 
 APIError = errors.APIError
 APIMisuseError - errors.APIMisuseError
