@@ -1,6 +1,5 @@
 from .. import keysinterface
 
 
-InMemoryChannelKeys = chaininterface.InMemoryChannelKeys
-KeysManager = chaininterface.KeysManager
-
+InMemoryChannelKeys = keysinterface.InMemoryChannelKeys
+KeysManager = keysinterface.KeysManager
