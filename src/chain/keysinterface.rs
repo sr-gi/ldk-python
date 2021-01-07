@@ -135,28 +135,18 @@ impl Deref for PyKeysManager {
 impl PyKeysManager {
     #[new]
     fn new(
-        seed: &[u8],
+        seed: [u8; 32],
         network: PyNetwork,
         starting_time_secs: u64,
         starting_time_nanos: u32,
-    ) -> PyResult<Self> {
-        if seed.len() != 32 {
-            return Err(exceptions::PyValueError::new_err(format!(
-                "Expected 32-byte seed, received a {}-byte one",
-                seed.len()
-            )));
-        }
-
-        let mut s: [u8; 32] = Default::default();
-        s.copy_from_slice(&seed[0..32]);
-
-        Ok(PyKeysManager {
+    ) -> Self {
+        PyKeysManager {
             inner: &mut KeysManager::new(
-                &s,
+                &seed,
                 network.inner,
                 starting_time_secs,
                 starting_time_nanos,
             ),
-        })
+        }
     }
 }
