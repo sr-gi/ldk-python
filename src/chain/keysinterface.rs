@@ -140,13 +140,14 @@ impl PyKeysManager {
         starting_time_secs: u64,
         starting_time_nanos: u32,
     ) -> Self {
+        let km = KeysManager::new(
+            &seed,
+            network.inner,
+            starting_time_secs,
+            starting_time_nanos,
+        );
         PyKeysManager {
-            inner: &mut KeysManager::new(
-                &seed,
-                network.inner,
-                starting_time_secs,
-                starting_time_nanos,
-            ),
+            inner: Box::into_raw(Box::new(km)),
         }
     }
 }
