@@ -150,4 +150,18 @@ impl PyKeysManager {
             inner: Box::into_raw(Box::new(km)),
         }
     }
+
+    fn derive_channel_keys(
+        &self,
+        channel_value_satoshis: u64,
+        params_1: u64,
+        params_2: u64,
+    ) -> PyInMemoryChannelKeys {
+        unsafe {
+            let chan_keys = self.inner.as_ref().unwrap();
+            PyInMemoryChannelKeys {
+                inner: chan_keys.derive_channel_keys(channel_value_satoshis, params_1, params_2),
+            }
+        }
+    }
 }
