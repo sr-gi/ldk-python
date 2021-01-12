@@ -1,5 +1,5 @@
 import pytest
-from conftest import get_random_pk_bytes, get_random_bytes
+from conftest import get_random_pk_bytes, get_random_bytes, get_random_int
 
 from ldk_python.primitives import PublicKey
 from ldk_python.ln.features import NodeFeatures, ChannelFeatures
@@ -16,7 +16,7 @@ def route_hop():
 def get_rand_route_hop():
     pubkey = PublicKey(get_random_pk_bytes())
     node_features = NodeFeatures()
-    short_channel_id = int.from_bytes(get_random_bytes(8), "big")
+    short_channel_id = get_random_int(2)
     channel_features = ChannelFeatures()
     fee_msat = 1000
     cltv_expiry_delta = 20
@@ -33,7 +33,7 @@ def test_route_hop_getters():
     # Try back once bindings are switched to work with references intead of values
     pubkey = PublicKey(get_random_pk_bytes())
     node_features = NodeFeatures()
-    short_channel_id = int.from_bytes(get_random_bytes(8), "big")
+    short_channel_id = get_random_int(2)
     channel_features = ChannelFeatures()
     fee_msat = 1000
     cltv_expiry_delta = 20

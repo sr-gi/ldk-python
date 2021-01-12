@@ -32,6 +32,10 @@ class Empty:
     pass
 
 
+def get_random_int(nbytes):
+    return random.getrandbits(8 * nbytes)
+
+
 def get_random_bytes(nbytes):
     return random.getrandbits(8 * nbytes).to_bytes(nbytes, "big")
 
@@ -83,6 +87,6 @@ def get_random_net_addr(addr_type):
     else:
         addr = get_random_bytes(32)
 
-    port = int.from_bytes(get_random_bytes(2), "big")
+    port = get_random_int(2)
 
     return addr, port

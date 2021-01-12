@@ -1,4 +1,4 @@
-from conftest import get_random_net_addr, get_random_bytes
+from conftest import get_random_net_addr, get_random_bytes, get_random_int
 from ldk_python.ln.msgs import NetAddress
 
 
@@ -38,7 +38,7 @@ def test_netaddress_onionv2():
 def test_netaddress_onionv3():
     onionv3, port = get_random_net_addr("onionv3")
     version = 1
-    checksum = int.from_bytes(get_random_bytes(2), "big")
+    checksum = get_random_int(2)
     netaddr = NetAddress.onionv3(onionv3, checksum, version, port)
 
     assert isinstance(netaddr, NetAddress)
