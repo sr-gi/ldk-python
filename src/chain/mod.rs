@@ -6,6 +6,7 @@ use crate::chain::channelmonitor::{
     PyMonitorEvent, TemporaryChannelMonitorUpdateErr,
 };
 
+use crate::has_trait_bound;
 use crate::primitives::PyOutPoint;
 use crate::process_python_return;
 
@@ -44,8 +45,21 @@ pub struct PyWatch {
 #[pymethods]
 impl PyWatch {
     #[new]
-    fn new(watch: Py<PyAny>) -> Self {
-        PyWatch { inner: watch }
+    fn new(watch: Py<PyAny>) -> PyResult<Self> {
+        if has_trait_bound(
+            &watch,
+            vec![
+                "watch_channel",
+                "update_channel",
+                "release_pending_monitor_events",
+            ],
+        ) {
+            Ok(PyWatch { inner: watch })
+        } else {
+            Err(exceptions::PyTypeError::new_err(format!(
+                "Not all required methods are implemented by Watch"
+            )))
+        }
     }
 
     fn watch_channel(
@@ -59,7 +73,7 @@ impl PyWatch {
                 Ok(_) => Ok(()),
                 Err(e) => {
                     if e.is_instance::<TemporaryChannelMonitorUpdateErr>(py)
-                        || e.is_instance::<TemporaryChannelMonitorUpdateErr>(py)
+                        || e.is_instance::<PermanentChannelMonitorUpdateErr>(py)
                     {
                         Err(e)
                     } else {
@@ -83,7 +97,7 @@ impl PyWatch {
                 Ok(_) => Ok(()),
                 Err(e) => {
                     if e.is_instance::<TemporaryChannelMonitorUpdateErr>(py)
-                        || e.is_instance::<TemporaryChannelMonitorUpdateErr>(py)
+                        || e.is_instance::<PermanentChannelMonitorUpdateErr>(py)
                     {
                         Err(e)
                     } else {
