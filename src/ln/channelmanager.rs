@@ -1,6 +1,8 @@
+use hex;
 use pyo3::create_exception;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
+use pyo3::PyObjectProtocol;
 
 use crate::chain::chaininterface::{PyBroadcasterInterface, PyFeeEstimator};
 use crate::chain::keysinterface::PyKeysManager;
@@ -59,6 +61,16 @@ impl PyPaymentPreimage {
             inner: PaymentPreimage(data),
         }
     }
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.0).into()
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyPaymentPreimage {
+    fn __str__(&self) -> String {
+        format!("{}", hex::encode(&self.inner.0))
+    }
 }
 
 #[pyclass(name=PaymentSecret)]
@@ -74,6 +86,17 @@ impl PyPaymentSecret {
         PyPaymentSecret {
             inner: PaymentSecret(data),
         }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.0).into()
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyPaymentSecret {
+    fn __str__(&self) -> String {
+        format!("{}", hex::encode(&self.inner.0))
     }
 }
 
@@ -97,6 +120,12 @@ impl PyPaymentHash {
     }
 }
 
+#[pyproto]
+impl PyObjectProtocol for PyPaymentHash {
+    fn __str__(&self) -> String {
+        format!("{}", hex::encode(&self.inner.0))
+    }
+}
 #[pyclass(name=ChannelDetails)]
 #[derive(Clone)]
 pub struct PyChannelDetails {
@@ -130,6 +159,55 @@ impl PyChannelDetails {
                 is_live,
             },
         }
+    }
+
+    #[getter]
+    fn channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn short_channel_id(&self) -> Option<u64> {
+        self.inner.short_channel_id
+    }
+
+    #[getter]
+    fn remote_network_id(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.remote_network_id,
+        }
+    }
+
+    #[getter]
+    fn counterparty_features(&self) -> PyInitFeatures {
+        PyInitFeatures {
+            inner: self.inner.counterparty_features.clone(),
+        }
+    }
+
+    #[getter]
+    fn channel_value_satoshis(&self) -> u64 {
+        self.inner.channel_value_satoshis
+    }
+
+    #[getter]
+    fn user_id(&self) -> u64 {
+        self.inner.user_id
+    }
+
+    #[getter]
+    fn outbound_capacity_msat(&self) -> u64 {
+        self.inner.outbound_capacity_msat
+    }
+
+    #[getter]
+    fn inbound_capacity_msat(&self) -> u64 {
+        self.inner.inbound_capacity_msat
+    }
+
+    #[getter]
+    fn is_live(&self) -> bool {
+        self.inner.is_live
     }
 }
 
