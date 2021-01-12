@@ -1,3 +1,4 @@
 from .. import channelmonitor
 
 TemporaryChannelMonitorUpdateErr = channelmonitor.TemporaryChannelMonitorUpdateErr
+PermanentChannelMonitorUpdateErr = channelmonitor.PermanentChannelMonitorUpdateErr
