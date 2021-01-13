@@ -210,6 +210,13 @@ fn errors(py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+#[pymodule]
+/// Events module for LDK.
+fn events(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<util::events::PyEvent>()?;
+    Ok(())
+}
+
 /// LDK bindings for Python
 #[pymodule]
 fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
@@ -226,5 +233,6 @@ fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(router))?;
     m.add_wrapped(wrap_pymodule!(config))?;
     m.add_wrapped(wrap_pymodule!(errors))?;
+    m.add_wrapped(wrap_pymodule!(events))?;
     Ok(())
 }
