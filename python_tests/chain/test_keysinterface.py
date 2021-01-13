@@ -1,8 +1,8 @@
 import pytest
 import time
 from ldk_python.chain.keysinterface import *
-from ldk_python.primitives import SecretKey, Network
-from conftest import get_random_sk_bytes
+from ldk_python.primitives import SecretKey, Network, OutPoint, TxOut, Script, PublicKey
+from conftest import get_random_sk_bytes, get_random_bytes, get_random_pk_bytes, get_random_int
 
 
 @pytest.fixture
@@ -22,6 +22,43 @@ def keys_manager():
     s_time_sec, s_time_nsec = str(time.time()).split(".")
 
     return KeysManager(seed, network, int(s_time_sec), int(s_time_nsec))
+
+
+# SpendableOutputDescriptor
+
+
+def test_static_output():
+    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
+    descriptor = SpendableOutputDescriptor.static_output(outpoint, txout)
+
+    assert isinstance(descriptor, SpendableOutputDescriptor) and descriptor.type == "StaticOutput"
+
+
+def test_dynamic_output_pwsh():
+    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    per_commitment_point = PublicKey(get_random_pk_bytes())
+    to_self_delay = 20
+    txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
+    key_derivation_params = (get_random_int(8), get_random_int(8))
+    revocation_pubkey = PublicKey(get_random_pk_bytes())
+    descriptor = SpendableOutputDescriptor.dynamic_output_pwsh(
+        outpoint, per_commitment_point, to_self_delay, txout, key_derivation_params, revocation_pubkey
+    )
+
+    assert isinstance(descriptor, SpendableOutputDescriptor) and descriptor.type == "DynamicOutputP2WSH"
+
+
+def test_static_output_counterparty_payment():
+    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
+    key_derivation_params = (get_random_int(8), get_random_int(8))
+    descriptor = SpendableOutputDescriptor.static_output_counterparty_payment(outpoint, txout, key_derivation_params)
+
+    assert isinstance(descriptor, SpendableOutputDescriptor) and descriptor.type == "StaticOutputCounterpartyPayment"
+
+
+# InMemoryChannelKeys
 
 
 def test_in_memory_channel_keys(in_mem_chan_keys):
