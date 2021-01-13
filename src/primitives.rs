@@ -160,8 +160,9 @@ impl PyObjectProtocol for PySignature {
 }
 
 #[pyclass(name=BlockHeader)]
+#[derive(Clone)]
 pub struct PyBlockHeader {
-    inner: BlockHeader,
+    pub inner: BlockHeader,
 }
 
 #[pymethods]
@@ -253,7 +254,7 @@ impl PyObjectProtocol for PyScript {
 }
 
 #[pyclass(name=TxId)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct PyTxId {
     pub inner: Txid,
 }
