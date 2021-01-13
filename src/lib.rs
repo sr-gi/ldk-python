@@ -100,6 +100,7 @@ fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
 #[pymodule]
 /// Keys manager module for LDK
 fn keysinterface(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<chain::keysinterface::PySpendableOutputDescriptor>()?;
     m.add_class::<chain::keysinterface::PyKeysManager>()?;
     m.add_class::<chain::keysinterface::PyInMemoryChannelKeys>()?;
     Ok(())

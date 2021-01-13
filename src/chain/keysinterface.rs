@@ -6,12 +6,103 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
 use crate::ln::chan_utils::PyChannelPublicKeys;
-use crate::primitives::{PyNetwork, PySecretKey};
+use crate::primitives::{PyNetwork, PyOutPoint, PyPublicKey, PySecretKey, PyTxOut};
 
 use bitcoin::consensus::encode::serialize;
 use bitcoin::secp256k1::Secp256k1;
 
-use lightning::chain::keysinterface::{InMemoryChannelKeys, KeysManager};
+use lightning::chain::keysinterface::{
+    InMemoryChannelKeys, KeysManager, SpendableOutputDescriptor,
+};
+
+pub fn match_spendable_output_descriptor(o: &SpendableOutputDescriptor) -> String {
+    match o {
+        SpendableOutputDescriptor::StaticOutput {
+            outpoint: _,
+            output: _,
+        } => String::from("StaticOutput"),
+        SpendableOutputDescriptor::DynamicOutputP2WSH {
+            outpoint: _,
+            per_commitment_point: _,
+            to_self_delay: _,
+            output: _,
+            key_derivation_params: _,
+            revocation_pubkey: _,
+        } => String::from("DynamicOutputP2WSH"),
+        SpendableOutputDescriptor::StaticOutputCounterpartyPayment {
+            outpoint: _,
+            output: _,
+            key_derivation_params: _,
+        } => String::from("StaticOutputCounterpartyPayment"),
+    }
+}
+
+#[pyclass(name=SpendableOutputDescriptor)]
+#[derive(Clone)]
+pub struct PySpendableOutputDescriptor {
+    pub inner: SpendableOutputDescriptor,
+    pub output_type: String,
+}
+
+#[pymethods]
+impl PySpendableOutputDescriptor {
+    #[staticmethod]
+    fn static_output(outpoint: PyOutPoint, output: PyTxOut) -> Self {
+        let descriptor = SpendableOutputDescriptor::StaticOutput {
+            outpoint: outpoint.inner,
+            output: output.inner,
+        };
+        PySpendableOutputDescriptor {
+            output_type: match_spendable_output_descriptor(&descriptor),
+            inner: descriptor,
+        }
+    }
+
+    #[staticmethod]
+    fn dynamic_output_pwsh(
+        outpoint: PyOutPoint,
+        per_commitment_point: PyPublicKey,
+        to_self_delay: u16,
+        output: PyTxOut,
+        key_derivation_params: (u64, u64),
+        revocation_pubkey: PyPublicKey,
+    ) -> Self {
+        let descriptor = SpendableOutputDescriptor::DynamicOutputP2WSH {
+            outpoint: outpoint.inner,
+            per_commitment_point: per_commitment_point.inner,
+            to_self_delay,
+            output: output.inner,
+            key_derivation_params,
+            revocation_pubkey: revocation_pubkey.inner,
+        };
+        PySpendableOutputDescriptor {
+            output_type: match_spendable_output_descriptor(&descriptor),
+            inner: descriptor,
+        }
+    }
+
+    #[staticmethod]
+    fn static_output_counterparty_payment(
+        outpoint: PyOutPoint,
+        output: PyTxOut,
+        key_derivation_params: (u64, u64),
+    ) -> Self {
+        let descriptor = SpendableOutputDescriptor::StaticOutputCounterpartyPayment {
+            outpoint: outpoint.inner,
+            output: output.inner,
+            key_derivation_params,
+        };
+        PySpendableOutputDescriptor {
+            output_type: match_spendable_output_descriptor(&descriptor),
+            inner: descriptor,
+        }
+    }
+
+    #[getter]
+    fn get_type(&self) -> String {
+        self.output_type.clone()
+    }
+}
 
 #[pyclass(name=InMemoryChannelKeys)]
 #[derive(Clone)]
