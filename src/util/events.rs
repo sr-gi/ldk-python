@@ -117,16 +117,16 @@ impl PyEvent {
         }
     }
 
-    // FIXME: Check how to bind durantion
-    // #[staticmethod]
-    // fn pending_htlcs_forwardable(time_forwardable: Duration) -> Self {
-    //     PyEvent {
-    //         inner: Event::PendingHTLCsForwardable {
-    //             time_forwardable: time_forwardable,
-    //         },
-    //         event_type: String::from("PendingHTLCsForwardable"),
-    //     }
-    // }
+    // FIXME: This may be best with some bind between timedate.timedelta and Duration, leaving it as it for now
+    #[staticmethod]
+    fn pending_htlcs_forwardable(secs: u64, nanos: u32) -> Self {
+        PyEvent {
+            inner: Event::PendingHTLCsForwardable {
+                time_forwardable: Duration::new(secs, nanos),
+            },
+            event_type: String::from("PendingHTLCsForwardable"),
+        }
+    }
 
     #[staticmethod]
     fn spendable_outputs(outputs: Vec<PySpendableOutputDescriptor>) -> Self {

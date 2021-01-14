@@ -37,8 +37,10 @@ def test_payment_failed():
 
 
 def test_pending_htlcs_forwardable():
-    # FIXME: Implement when available
-    pass
+    secs = get_random_int(8)
+    nanos = get_random_int(4)
+    event = Event.pending_htlcs_forwardable(secs, nanos)
+    assert isinstance(event, Event) and event.type == "PendingHTLCsForwardable"
 
 
 def test_spendable_outputs():
