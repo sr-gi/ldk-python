@@ -6,12 +6,17 @@ use pyo3::exceptions;
 use pyo3::prelude::*;
 
 use crate::chain::chaininterface::{PyBroadcasterInterface, PyFeeEstimator};
+use crate::chain::keysinterface::PyInMemoryChannelKeys;
 use crate::chain::process_python_monitor_return;
 use crate::has_trait_bound;
+use crate::ln::chan_utils::PyHolderCommitmentTransaction;
 use crate::logger::LDKLogger;
-use crate::primitives::{PyBlockHeader, PyOutPoint, PyScript, PyTransaction, PyTxId, PyTxOut};
+use crate::primitives::{
+    PyBlockHeader, PyOutPoint, PyPublicKey, PyScript, PyTransaction, PyTxId, PyTxOut,
+};
 use crate::util::events::{match_event_type, PyEvent};
 
+use bitcoin::blockdata::script::Script;
 use lightning::chain::channelmonitor::{
     ChannelMonitor, ChannelMonitorUpdate, ChannelMonitorUpdateErr, MonitorEvent, Persist,
 };
@@ -29,6 +34,41 @@ impl Deref for PyInMemoryKeysChannelMonitor {
 
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.inner }
+    }
+}
+
+#[pymethods]
+impl PyInMemoryKeysChannelMonitor {
+    #[new]
+    fn new(
+        keys: PyInMemoryChannelKeys,
+        shutdown_pubkey: PyPublicKey,
+        on_counterparty_tx_csv: u16,
+        destination_script: PyScript,
+        funding_info: (PyOutPoint, PyScript),
+        counterparty_htlc_base_key: PyPublicKey,
+        counterparty_delayed_payment_base_key: PyPublicKey,
+        on_holder_tx_csv: u16,
+        funding_redeemscript: PyScript,
+        channel_value_satoshis: u64,
+        commitment_transaction_number_obscure_factor: u64,
+        initial_holder_commitment_tx: PyHolderCommitmentTransaction,
+    ) -> Self {
+        let mut cm = ChannelMonitor::new(
+            keys.inner,
+            &shutdown_pubkey.inner,
+            on_counterparty_tx_csv,
+            &destination_script.inner,
+            (funding_info.0.inner, funding_info.1.inner),
+            &counterparty_htlc_base_key.inner,
+            &counterparty_delayed_payment_base_key.inner,
+            on_holder_tx_csv,
+            funding_redeemscript.inner,
+            channel_value_satoshis,
+            commitment_transaction_number_obscure_factor,
+            initial_holder_commitment_tx.inner,
+        );
+        PyInMemoryKeysChannelMonitor { inner: &mut cm }
     }
 }
 
@@ -58,6 +98,17 @@ impl PyInMemoryKeysChannelMonitor {
 
     fn get_latest_update_id(&self) -> u64 {
         unsafe { self.inner.as_ref().unwrap().get_latest_update_id() }
+    }
+
+    fn get_dummy_funding_txo(&self) -> (PyOutPoint, PyScript) {
+        let cm = unsafe { self.inner.as_ref().unwrap() };
+        let (outpoint, script) = cm.get_funding_txo();
+        (
+            PyOutPoint { inner: *outpoint },
+            PyScript {
+                inner: Script::new(),
+            },
+        )
     }
 
     fn get_funding_txo(&self) -> (PyOutPoint, PyScript) {

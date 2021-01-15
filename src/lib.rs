@@ -86,6 +86,7 @@ fn chaininterface(_: Python, m: &PyModule) -> PyResult<()> {
 #[pymodule]
 /// Channel monitor module for LDK.
 fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<chain::channelmonitor::PyInMemoryKeysChannelMonitor>()?;
     m.add(
         "TemporaryChannelMonitorUpdateErr",
         py.get_type::<chain::channelmonitor::TemporaryChannelMonitorUpdateErr>(),
