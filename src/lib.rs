@@ -94,6 +94,7 @@ fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
         "PermanentChannelMonitorUpdateErr",
         py.get_type::<chain::channelmonitor::PermanentChannelMonitorUpdateErr>(),
     )?;
+    m.add_class::<chain::channelmonitor::PyPersist>()?;
     Ok(())
 }
 

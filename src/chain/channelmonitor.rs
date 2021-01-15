@@ -2,15 +2,21 @@ use std::collections::HashMap;
 use std::ops::Deref;
 
 use pyo3::create_exception;
+use pyo3::exceptions;
 use pyo3::prelude::*;
 
 use crate::chain::chaininterface::{PyBroadcasterInterface, PyFeeEstimator};
+use crate::chain::process_python_monitor_return;
+use crate::has_trait_bound;
 use crate::logger::LDKLogger;
 use crate::primitives::{PyBlockHeader, PyOutPoint, PyScript, PyTransaction, PyTxId, PyTxOut};
 use crate::util::events::{match_event_type, PyEvent};
 
-use lightning::chain::channelmonitor::{ChannelMonitor, ChannelMonitorUpdate, MonitorEvent};
+use lightning::chain::channelmonitor::{
+    ChannelMonitor, ChannelMonitorUpdate, ChannelMonitorUpdateErr, MonitorEvent, Persist,
+};
 use lightning::chain::keysinterface::InMemoryChannelKeys;
+use lightning::chain::transaction::OutPoint;
 
 #[pyclass(unsendable, name=InMemoryKeysChannelMonitor)]
 #[derive(Clone)]
@@ -207,4 +213,106 @@ create_exception!(
 #[derive(Clone)]
 pub struct PyMonitorEvent {
     pub inner: MonitorEvent,
+}
+
+#[pyclass(name=Persist)]
+pub struct PyPersist {
+    pub inner: Py<PyAny>,
+}
+
+#[pymethods]
+impl PyPersist {
+    #[new]
+    fn new(persister: Py<PyAny>) -> PyResult<Self> {
+        if has_trait_bound(
+            &persister,
+            vec!["update_persisted_channel", "persist_new_channel"],
+        ) {
+            Ok(PyPersist { inner: persister })
+        } else {
+            Err(exceptions::PyTypeError::new_err(format!(
+                "Not all required methods are implemented by Persist"
+            )))
+        }
+    }
+
+    fn persist_new_channel(
+        &self,
+        id: PyOutPoint,
+        data: PyInMemoryKeysChannelMonitor,
+    ) -> PyResult<()> {
+        Python::with_gil(|py| {
+            let py_persister = self.inner.as_ref(py);
+            match py_persister.call_method1("persist_new_channel", (id, data)) {
+                Ok(_) => Ok(()),
+                Err(e) => {
+                    if e.is_instance::<TemporaryChannelMonitorUpdateErr>(py)
+                        || e.is_instance::<PermanentChannelMonitorUpdateErr>(py)
+                    {
+                        Err(e)
+                    } else {
+                        Err(exceptions::PyValueError::new_err(
+                            "Unrecorgnized ChannelMonitorUpdateErr",
+                        ))
+                    }
+                }
+            }
+        })
+    }
+
+    fn update_persisted_channel(
+        &self,
+        id: PyOutPoint,
+        update: PyChannelMonitorUpdate,
+        data: PyInMemoryKeysChannelMonitor,
+    ) -> PyResult<()> {
+        Python::with_gil(|py| {
+            let py_persister = self.inner.as_ref(py);
+            match py_persister.call_method1("update_persisted_channel", (id, update, data)) {
+                Ok(_) => Ok(()),
+                Err(e) => {
+                    if e.is_instance::<TemporaryChannelMonitorUpdateErr>(py)
+                        || e.is_instance::<PermanentChannelMonitorUpdateErr>(py)
+                    {
+                        Err(e)
+                    } else {
+                        Err(exceptions::PyValueError::new_err(
+                            "Unrecorgnized ChannelMonitorUpdateErr",
+                        ))
+                    }
+                }
+            }
+        })
+    }
+}
+
+impl Persist<InMemoryChannelKeys> for PyPersist {
+    fn persist_new_channel(
+        &self,
+        id: OutPoint,
+        data: &ChannelMonitor<InMemoryChannelKeys>,
+    ) -> Result<(), ChannelMonitorUpdateErr> {
+        process_python_monitor_return(self.persist_new_channel(
+            PyOutPoint { inner: id },
+            PyInMemoryKeysChannelMonitor {
+                inner: (data as *const _) as *mut _,
+            },
+        ))
+    }
+    fn update_persisted_channel(
+        &self,
+        id: OutPoint,
+        update: &ChannelMonitorUpdate,
+        data: &ChannelMonitor<InMemoryChannelKeys>,
+    ) -> Result<(), ChannelMonitorUpdateErr> {
+        process_python_monitor_return(self.update_persisted_channel(
+            PyOutPoint { inner: id },
+            PyChannelMonitorUpdate {
+                inner: update.clone(),
+            },
+            PyInMemoryKeysChannelMonitor {
+                inner: (data as *const _) as *mut _,
+            },
+        ))
+    }
 }
