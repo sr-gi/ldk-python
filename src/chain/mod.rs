@@ -132,7 +132,7 @@ impl Watch for PyWatch {
         process_python_monitor_return(self.watch_channel(
             PyOutPoint { inner: funding_txo },
             PyInMemoryKeysChannelMonitor {
-                inner: &mut mut_monitor,
+                inner: Box::new(&mut mut_monitor),
             },
         ))
     }

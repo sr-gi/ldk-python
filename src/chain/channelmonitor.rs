@@ -26,16 +26,16 @@ use lightning::chain::transaction::OutPoint;
 #[pyclass(unsendable, name=InMemoryKeysChannelMonitor)]
 #[derive(Clone)]
 pub struct PyInMemoryKeysChannelMonitor {
-    pub inner: *mut ChannelMonitor<InMemoryChannelKeys>,
+    pub inner: Box<*mut ChannelMonitor<InMemoryChannelKeys>>,
 }
 
-impl Deref for PyInMemoryKeysChannelMonitor {
-    type Target = ChannelMonitor<InMemoryChannelKeys>;
+// impl Deref for PyInMemoryKeysChannelMonitor {
+//     type Target = ChannelMonitor<InMemoryChannelKeys>;
 
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*self.inner }
-    }
-}
+//     fn deref(&self) -> &Self::Target {
+//         unsafe { &*self.inner }
+//     }
+// }
 
 #[pymethods]
 impl PyInMemoryKeysChannelMonitor {
@@ -68,7 +68,9 @@ impl PyInMemoryKeysChannelMonitor {
             commitment_transaction_number_obscure_factor,
             initial_holder_commitment_tx.inner,
         );
-        PyInMemoryKeysChannelMonitor { inner: &mut cm }
+        PyInMemoryKeysChannelMonitor {
+            inner: Box::new(&mut cm),
+        }
     }
 }
 
@@ -83,7 +85,7 @@ impl PyInMemoryKeysChannelMonitor {
         fee_estimator: PyFeeEstimator,
         logger: LDKLogger,
     ) -> PyResult<()> {
-        let cm = unsafe { self.inner.as_mut().unwrap() };
+        let cm = unsafe { (*self.inner).as_mut().unwrap() };
 
         match cm.update_monitor(
             &updates.inner,
@@ -97,11 +99,12 @@ impl PyInMemoryKeysChannelMonitor {
     }
 
     fn get_latest_update_id(&self) -> u64 {
-        unsafe { self.inner.as_ref().unwrap().get_latest_update_id() }
+        let cm = unsafe { (*self.inner).as_ref().unwrap() };
+        cm.get_latest_update_id()
     }
 
     fn get_dummy_funding_txo(&self) -> (PyOutPoint, PyScript) {
-        let cm = unsafe { self.inner.as_ref().unwrap() };
+        let cm = unsafe { (*self.inner).as_ref().unwrap() };
         let (outpoint, script) = cm.get_funding_txo();
         (
             PyOutPoint { inner: *outpoint },
@@ -112,7 +115,7 @@ impl PyInMemoryKeysChannelMonitor {
     }
 
     fn get_funding_txo(&self) -> (PyOutPoint, PyScript) {
-        let cm = unsafe { self.inner.as_ref().unwrap() };
+        let cm = unsafe { (*self.inner).as_ref().unwrap() };
         let (outpoint, script) = cm.get_funding_txo();
         (
             PyOutPoint { inner: *outpoint },
@@ -123,7 +126,7 @@ impl PyInMemoryKeysChannelMonitor {
     }
 
     fn get_outputs_to_watch(&self) -> HashMap<PyTxId, Vec<(u32, PyScript)>> {
-        let cm = unsafe { self.inner.as_ref().unwrap() };
+        let cm = unsafe { (*self.inner).as_ref().unwrap() };
         let mut outputs: HashMap<PyTxId, Vec<(u32, PyScript)>> = HashMap::new();
 
         for (txid, txouts) in cm.get_outputs_to_watch().into_iter() {
@@ -143,7 +146,7 @@ impl PyInMemoryKeysChannelMonitor {
     }
 
     fn get_and_clear_pending_monitor_events(&mut self) -> Vec<PyMonitorEvent> {
-        let cm = unsafe { self.inner.as_mut().unwrap() };
+        let cm = unsafe { (*self.inner).as_mut().unwrap() };
         let mut monitor_events: Vec<PyMonitorEvent> = vec![];
         for event in cm.get_and_clear_pending_monitor_events().into_iter() {
             monitor_events.push(PyMonitorEvent { inner: event })
@@ -153,7 +156,7 @@ impl PyInMemoryKeysChannelMonitor {
     }
 
     fn get_and_clear_pending_events(&mut self) -> Vec<PyEvent> {
-        let cm = unsafe { self.inner.as_mut().unwrap() };
+        let cm = unsafe { (*self.inner).as_mut().unwrap() };
         let mut events: Vec<PyEvent> = vec![];
         for event in cm.get_and_clear_pending_events().iter() {
             events.push(PyEvent {
@@ -166,7 +169,7 @@ impl PyInMemoryKeysChannelMonitor {
     }
 
     fn get_latest_holder_commitment_txn(&mut self, logger: LDKLogger) -> Vec<PyTransaction> {
-        let cm = unsafe { self.inner.as_mut().unwrap() };
+        let cm = unsafe { (*self.inner).as_mut().unwrap() };
         let mut txs: Vec<PyTransaction> = vec![];
         for tx in cm
             .get_latest_holder_commitment_txn(&Box::new(logger))
@@ -187,7 +190,7 @@ impl PyInMemoryKeysChannelMonitor {
         fee_estimator: PyFeeEstimator,
         logger: LDKLogger,
     ) -> Vec<(PyTxId, Vec<(u32, PyTxOut)>)> {
-        let cm = unsafe { self.inner.as_mut().unwrap() };
+        let cm = unsafe { (*self.inner).as_mut().unwrap() };
         // Foreign txdata -> Native txdata
         let mut native_txdata: Vec<_> = vec![];
         for (i, tx) in txdata.iter() {
@@ -225,7 +228,7 @@ impl PyInMemoryKeysChannelMonitor {
         fee_estimator: PyFeeEstimator,
         logger: LDKLogger,
     ) {
-        let cm = unsafe { self.inner.as_mut().unwrap() };
+        let cm = unsafe { (*self.inner).as_mut().unwrap() };
         cm.block_disconnected(
             &header.inner,
             height,
@@ -346,7 +349,7 @@ impl Persist<InMemoryChannelKeys> for PyPersist {
         process_python_monitor_return(self.persist_new_channel(
             PyOutPoint { inner: id },
             PyInMemoryKeysChannelMonitor {
-                inner: (data as *const _) as *mut _,
+                inner: Box::new((data as *const _) as *mut _), //inner: (data as *const _) as *mut _,
             },
         ))
     }
@@ -362,7 +365,7 @@ impl Persist<InMemoryChannelKeys> for PyPersist {
                 inner: update.clone(),
             },
             PyInMemoryKeysChannelMonitor {
-                inner: (data as *const _) as *mut _,
+                inner: Box::new((data as *const _) as *mut _),
             },
         ))
     }
