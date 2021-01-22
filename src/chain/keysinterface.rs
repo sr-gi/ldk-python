@@ -107,7 +107,7 @@ impl PySpendableOutputDescriptor {
 #[pyclass(name=InMemoryChannelKeys)]
 #[derive(Clone)]
 pub struct PyInMemoryChannelKeys {
-    inner: InMemoryChannelKeys,
+    pub inner: InMemoryChannelKeys,
 }
 
 #[pymethods]

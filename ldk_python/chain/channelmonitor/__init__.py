@@ -1,5 +1,6 @@
 from .. import channelmonitor
 
+InMemoryKeysChannelMonitor = channelmonitor.InMemoryKeysChannelMonitor
 TemporaryChannelMonitorUpdateErr = channelmonitor.TemporaryChannelMonitorUpdateErr
 PermanentChannelMonitorUpdateErr = channelmonitor.PermanentChannelMonitorUpdateErr
 Persist = channelmonitor.Persist
