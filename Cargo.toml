@@ -9,7 +9,8 @@ name = "ldk_python"
 crate-type = ["cdylib"]
 
 [dependencies]
-lightning = "0.0.12"
+#lightning = "0.0.12"
+lightning = { path = "../rust-lightning/lightning" }
 bitcoin = "0.24"
 hex = "0.4.2"
 pyo3 = { version = "0.12.3", features = ["extension-module"] }
