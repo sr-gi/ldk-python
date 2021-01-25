@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use pyo3::create_exception;
 use pyo3::exceptions;
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 
 use crate::chain::chaininterface::{PyBroadcasterInterface, PyFeeEstimator};
 use crate::chain::keysinterface::PyInMemoryChannelKeys;
@@ -20,6 +21,7 @@ use lightning::chain::channelmonitor::{
 };
 use lightning::chain::keysinterface::InMemoryChannelKeys;
 use lightning::chain::transaction::OutPoint;
+use lightning::util::ser::{Readable, Writeable};
 
 #[pyclass(unsendable, name=InMemoryKeysChannelMonitor)]
 #[derive(Clone)]
@@ -229,6 +231,28 @@ pub struct PyChannelMonitorUpdate {
     pub inner: ChannelMonitorUpdate,
 }
 
+#[pymethods]
+impl PyChannelMonitorUpdate {
+    #[staticmethod]
+    fn from_bytes(mut data: &[u8]) -> PyResult<Self> {
+        match ChannelMonitorUpdate::read(&mut data) {
+            Ok(x) => Ok(PyChannelMonitorUpdate { inner: x }),
+            Err(_) => Err(exceptions::PyValueError::new_err(
+                "Cannot build ChannelMonitorUpdate with the given data",
+            )),
+        }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn update_id(&self) -> u64 {
+        self.inner.update_id
+    }
+}
+
 create_exception!(
     channelmonitor,
     TemporaryChannelMonitorUpdateErr,
@@ -283,9 +307,10 @@ impl PyPersist {
                     {
                         Err(e)
                     } else {
-                        Err(exceptions::PyValueError::new_err(
-                            "Unrecorgnized ChannelMonitorUpdateErr",
-                        ))
+                        Err(exceptions::PyValueError::new_err(format!(
+                            "Unrecorgnized ChannelMonitorUpdateErr -> {}",
+                            e
+                        )))
                     }
                 }
             }
@@ -308,9 +333,10 @@ impl PyPersist {
                     {
                         Err(e)
                     } else {
-                        Err(exceptions::PyValueError::new_err(
-                            "Unrecorgnized ChannelMonitorUpdateErr",
-                        ))
+                        Err(exceptions::PyValueError::new_err(format!(
+                            "Unrecorgnized ChannelMonitorUpdateErr -> {}",
+                            e
+                        )))
                     }
                 }
             }
