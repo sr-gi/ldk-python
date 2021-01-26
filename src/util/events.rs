@@ -1,8 +1,11 @@
-use lightning::util::events::Event;
+use pyo3::exceptions;
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 use std::time::Duration;
 
-use crate::chain::keysinterface::PySpendableOutputDescriptor;
+use lightning::util::events::Event;
+
+use crate::chain::keysinterface::{match_spendable_output_descriptor, PySpendableOutputDescriptor};
 use crate::ln::channelmanager::{PyPaymentHash, PyPaymentPreimage, PyPaymentSecret};
 use crate::primitives::{PyOutPoint, PyScript};
 
@@ -145,5 +148,216 @@ impl PyEvent {
     #[getter]
     fn get_type(&self) -> String {
         self.event_type.clone()
+    }
+
+    // FundingGenerationReady attributes
+
+    #[getter]
+    fn temporary_channel_id(&self, py: Python) -> PyResult<Py<PyBytes>> {
+        match self.inner {
+            Event::FundingGenerationReady {
+                temporary_channel_id: t,
+                channel_value_satoshis: _,
+                output_script: _,
+                user_channel_id: _,
+            } => Ok(PyBytes::new(py, &t).into()),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have temporary_channel_id",
+                self.event_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn channel_value_satoshis(&self) -> PyResult<u64> {
+        match self.inner {
+            Event::FundingGenerationReady {
+                temporary_channel_id: _,
+                channel_value_satoshis: v,
+                output_script: _,
+                user_channel_id: _,
+            } => Ok(v),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have channel_value_satoshis",
+                self.event_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn output_script(&self) -> PyResult<PyScript> {
+        match &self.inner {
+            Event::FundingGenerationReady {
+                temporary_channel_id: _,
+                channel_value_satoshis: _,
+                output_script: s,
+                user_channel_id: _,
+            } => Ok(PyScript { inner: s.clone() }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have output_script",
+                self.event_type
+            ))),
+        }
+    }
+
+    // Shared amongst FundingGenerationReady and FundingBroadcastSafe
+    #[getter]
+    fn user_channel_id(&self) -> PyResult<u64> {
+        match self.inner {
+            Event::FundingGenerationReady {
+                temporary_channel_id: _,
+                channel_value_satoshis: _,
+                output_script: _,
+                user_channel_id: c,
+            } => Ok(c),
+            Event::FundingBroadcastSafe {
+                funding_txo: _,
+                user_channel_id: i,
+            } => Ok(i),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have user_channel_id",
+                self.event_type
+            ))),
+        }
+    }
+
+    // FundingBroadcastSafe attributes
+
+    #[getter]
+    fn funding_txo(&self) -> PyResult<PyOutPoint> {
+        match self.inner {
+            Event::FundingBroadcastSafe {
+                funding_txo: o,
+                user_channel_id: _,
+            } => Ok(PyOutPoint { inner: o }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have funding_txo",
+                self.event_type
+            ))),
+        }
+    }
+
+    // PaymentReceived attributes
+
+    // Shared amognst PaymentReceived and PaymentFailed
+
+    #[getter]
+    fn payment_hash(&self) -> PyResult<PyPaymentHash> {
+        match self.inner {
+            Event::PaymentReceived {
+                payment_hash: h,
+                payment_secret: _,
+                amt: _,
+            } => Ok(PyPaymentHash { inner: h }),
+            Event::PaymentFailed {
+                payment_hash: h,
+                rejected_by_dest: _,
+            } => Ok(PyPaymentHash { inner: h }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have payment_hash",
+                self.event_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn payment_secret(&self) -> PyResult<Option<PyPaymentSecret>> {
+        match self.inner {
+            Event::PaymentReceived {
+                payment_hash: _,
+                payment_secret: s,
+                amt: _,
+            } => Ok(match s {
+                Some(secret) => Some(PyPaymentSecret { inner: secret }),
+                None => None,
+            }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have payment_secret",
+                self.event_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn amt(&self) -> PyResult<u64> {
+        match self.inner {
+            Event::PaymentReceived {
+                payment_hash: _,
+                payment_secret: _,
+                amt: a,
+            } => Ok(a),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have amt",
+                self.event_type
+            ))),
+        }
+    }
+
+    // PaymentSent attributes
+
+    #[getter]
+    fn payment_preimage(&self) -> PyResult<PyPaymentPreimage> {
+        match self.inner {
+            Event::PaymentSent {
+                payment_preimage: p,
+            } => Ok(PyPaymentPreimage { inner: p }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have payment_preimage",
+                self.event_type
+            ))),
+        }
+    }
+
+    // PaymentFailed attributes
+
+    #[getter]
+    fn rejected_by_dest(&self) -> PyResult<bool> {
+        match self.inner {
+            Event::PaymentFailed {
+                payment_hash: _,
+                rejected_by_dest: r,
+            } => Ok(r),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have rejected_by_dest",
+                self.event_type
+            ))),
+        }
+    }
+
+    // PendingHTLCsForwardable attributes
+
+    #[getter]
+    fn time_forwardable(&self) -> PyResult<(u64, u32)> {
+        match self.inner {
+            Event::PendingHTLCsForwardable {
+                time_forwardable: t,
+            } => Ok((t.as_secs(), t.subsec_nanos())),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have time_forwardable",
+                self.event_type
+            ))),
+        }
+    }
+
+    // SpendableOutputs attributes
+
+    #[getter]
+    fn outputs(&self) -> PyResult<Vec<PySpendableOutputDescriptor>> {
+        match &self.inner {
+            Event::SpendableOutputs { outputs: o } => {
+                let mut py_outputs: Vec<PySpendableOutputDescriptor> = vec![];
+                for output in o.into_iter() {
+                    py_outputs.push(PySpendableOutputDescriptor {
+                        inner: output.clone(),
+                        output_type: match_spendable_output_descriptor(output),
+                    })
+                }
+                Ok(py_outputs)
+            }
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have outputs",
+                self.event_type
+            ))),
+        }
     }
 }
