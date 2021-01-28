@@ -14,14 +14,10 @@ create_exception!(errors, MonitorUpdateFailed, APIError);
 
 pub fn match_api_error(e: &E::APIError) -> PyErr {
     match e {
-        E::APIError::APIMisuseError { err: _ } => APIMisuseError::new_err(format!("{:?}", &e)),
-        E::APIError::FeeRateTooHigh { err: _, feerate: _ } => {
-            FeeRateTooHigh::new_err(format!("{:?}", &e))
-        }
-        E::APIError::RouteError { err: _ } => RouteError::new_err(format!("{:?}", &e)),
-        E::APIError::ChannelUnavailable { err: _ } => {
-            ChannelUnavailable::new_err(format!("{:?}", &e))
-        }
+        E::APIError::APIMisuseError { .. } => APIMisuseError::new_err(format!("{:?}", &e)),
+        E::APIError::FeeRateTooHigh { .. } => FeeRateTooHigh::new_err(format!("{:?}", &e)),
+        E::APIError::RouteError { .. } => RouteError::new_err(format!("{:?}", &e)),
+        E::APIError::ChannelUnavailable { .. } => ChannelUnavailable::new_err(format!("{:?}", &e)),
         E::APIError::MonitorUpdateFailed => MonitorUpdateFailed::new_err(format!("{:?}", &e)),
     }
 }
