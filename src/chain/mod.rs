@@ -77,9 +77,10 @@ impl PyWatch {
                     {
                         Err(e)
                     } else {
-                        Err(exceptions::PyValueError::new_err(
-                            "Unrecorgnized ChannelMonitorUpdateErr",
-                        ))
+                        Err(exceptions::PyValueError::new_err(format!(
+                            "Unrecorgnized ChannelMonitorUpdateErr -> {}",
+                            e
+                        )))
                     }
                 }
             }
@@ -93,7 +94,7 @@ impl PyWatch {
     ) -> PyResult<()> {
         Python::with_gil(|py| {
             let py_watch = self.inner.as_ref(py);
-            match py_watch.call_method1("update_channels", (funding_txo, update)) {
+            match py_watch.call_method1("update_channel", (funding_txo, update)) {
                 Ok(_) => Ok(()),
                 Err(e) => {
                     if e.is_instance::<TemporaryChannelMonitorUpdateErr>(py)
@@ -101,9 +102,10 @@ impl PyWatch {
                     {
                         Err(e)
                     } else {
-                        Err(exceptions::PyValueError::new_err(
-                            "Unrecorgnized ChannelMonitorUpdateErr",
-                        ))
+                        Err(exceptions::PyValueError::new_err(format!(
+                            "Unrecorgnized ChannelMonitorUpdateErr -> {}",
+                            e
+                        )))
                     }
                 }
             }
