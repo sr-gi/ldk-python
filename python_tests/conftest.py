@@ -90,3 +90,9 @@ def get_random_net_addr(addr_type):
     port = get_random_int(2)
 
     return addr, port
+
+
+def check_not_available_getters(obj, local_attributes, all_attributes):
+    for missing_attr in list(all_attributes.difference(local_attributes)):
+        with pytest.raises(AttributeError, match=f"does not have {missing_attr}"):
+            getattr(obj, missing_attr)

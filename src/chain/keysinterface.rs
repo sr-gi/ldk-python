@@ -17,23 +17,11 @@ use lightning::chain::keysinterface::{
 
 pub fn match_spendable_output_descriptor(o: &SpendableOutputDescriptor) -> String {
     match o {
-        SpendableOutputDescriptor::StaticOutput {
-            outpoint: _,
-            output: _,
-        } => String::from("StaticOutput"),
-        SpendableOutputDescriptor::DynamicOutputP2WSH {
-            outpoint: _,
-            per_commitment_point: _,
-            to_self_delay: _,
-            output: _,
-            key_derivation_params: _,
-            revocation_pubkey: _,
-        } => String::from("DynamicOutputP2WSH"),
-        SpendableOutputDescriptor::StaticOutputCounterpartyPayment {
-            outpoint: _,
-            output: _,
-            key_derivation_params: _,
-        } => String::from("StaticOutputCounterpartyPayment"),
+        SpendableOutputDescriptor::StaticOutput { .. } => String::from("StaticOutput"),
+        SpendableOutputDescriptor::DynamicOutputP2WSH { .. } => String::from("DynamicOutputP2WSH"),
+        SpendableOutputDescriptor::StaticOutputCounterpartyPayment { .. } => {
+            String::from("StaticOutputCounterpartyPayment")
+        }
     }
 }
 
@@ -101,6 +89,99 @@ impl PySpendableOutputDescriptor {
     #[getter]
     fn get_type(&self) -> String {
         self.output_type.clone()
+    }
+
+    // Shared attributes
+
+    #[getter]
+    fn outpoint(&self) -> PyOutPoint {
+        match self.inner {
+            SpendableOutputDescriptor::StaticOutput { outpoint: o, .. } => PyOutPoint { inner: o },
+            SpendableOutputDescriptor::DynamicOutputP2WSH { outpoint: o, .. } => {
+                PyOutPoint { inner: o }
+            }
+            SpendableOutputDescriptor::StaticOutputCounterpartyPayment { outpoint: o, .. } => {
+                PyOutPoint { inner: o }
+            }
+        }
+    }
+
+    #[getter]
+    fn output(&self) -> PyTxOut {
+        match &self.inner {
+            SpendableOutputDescriptor::StaticOutput { output: o, .. } => {
+                PyTxOut { inner: o.clone() }
+            }
+            SpendableOutputDescriptor::DynamicOutputP2WSH { output: o, .. } => {
+                PyTxOut { inner: o.clone() }
+            }
+            SpendableOutputDescriptor::StaticOutputCounterpartyPayment { output: o, .. } => {
+                PyTxOut { inner: o.clone() }
+            }
+        }
+    }
+
+    // DynamicOutputP2WSH attributes
+
+    #[getter]
+    fn per_commitment_point(&self) -> PyResult<PyPublicKey> {
+        match self.inner {
+            SpendableOutputDescriptor::DynamicOutputP2WSH {
+                per_commitment_point: p,
+                ..
+            } => Ok(PyPublicKey { inner: p }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have per_commitment_point",
+                self.output_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn to_self_delay(&self) -> PyResult<u16> {
+        match self.inner {
+            SpendableOutputDescriptor::DynamicOutputP2WSH {
+                to_self_delay: d, ..
+            } => Ok(d),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have to_self_delay",
+                self.output_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn revocation_pubkey(&self) -> PyResult<PyPublicKey> {
+        match self.inner {
+            SpendableOutputDescriptor::DynamicOutputP2WSH {
+                revocation_pubkey: r,
+                ..
+            } => Ok(PyPublicKey { inner: r }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have revocation_pubkey",
+                self.output_type
+            ))),
+        }
+    }
+
+    // Attributes shared amongst DynamicOutputP2WSH and StaticOutputCounterpartyPayment
+
+    #[getter]
+    fn key_derivation_params(&self) -> PyResult<(u64, u64)> {
+        match self.inner {
+            SpendableOutputDescriptor::DynamicOutputP2WSH {
+                key_derivation_params: p,
+                ..
+            } => Ok(p),
+            SpendableOutputDescriptor::StaticOutputCounterpartyPayment {
+                key_derivation_params: p,
+                ..
+            } => Ok(p),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have key_derivation_params",
+                self.output_type
+            ))),
+        }
     }
 }
 

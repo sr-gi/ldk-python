@@ -2,7 +2,13 @@ import pytest
 import time
 from ldk_python.chain.keysinterface import *
 from ldk_python.primitives import SecretKey, Network, OutPoint, TxOut, Script, PublicKey
-from conftest import get_random_sk_bytes, get_random_bytes, get_random_pk_bytes, get_random_int
+from conftest import (
+    get_random_sk_bytes,
+    get_random_bytes,
+    get_random_pk_bytes,
+    get_random_int,
+    check_not_available_getters,
+)
 
 
 @pytest.fixture
@@ -26,6 +32,17 @@ def keys_manager():
 
 # SpendableOutputDescriptor
 
+all_attributes = set(
+    [
+        "outpoint",
+        "output",
+        "per_commitment_point",
+        "to_self_delay",
+        "key_derivation_params",
+        "revocation_pubkey",
+    ]
+)
+
 
 def test_static_output():
     outpoint = OutPoint.from_bytes(get_random_bytes(36))
@@ -33,6 +50,20 @@ def test_static_output():
     descriptor = SpendableOutputDescriptor.static_output(outpoint, txout)
 
     assert isinstance(descriptor, SpendableOutputDescriptor) and descriptor.type == "StaticOutput"
+
+
+def test_static_output_getters():
+    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
+    descriptor = SpendableOutputDescriptor.static_output(outpoint, txout)
+
+    assert descriptor.outpoint.serialize() == outpoint.serialize()
+    assert descriptor.output.serialize() == txout.serialize()
+
+    # Check no other getters are available
+    local_attributes = ["outpoint", "output"]
+
+    check_not_available_getters(descriptor, local_attributes, all_attributes)
 
 
 def test_dynamic_output_pwsh():
@@ -49,6 +80,27 @@ def test_dynamic_output_pwsh():
     assert isinstance(descriptor, SpendableOutputDescriptor) and descriptor.type == "DynamicOutputP2WSH"
 
 
+def test_dynamic_output_pwsh_getters():
+    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    per_commitment_point = PublicKey(get_random_pk_bytes())
+    to_self_delay = 20
+    txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
+    key_derivation_params = (get_random_int(8), get_random_int(8))
+    revocation_pubkey = PublicKey(get_random_pk_bytes())
+    descriptor = SpendableOutputDescriptor.dynamic_output_pwsh(
+        outpoint, per_commitment_point, to_self_delay, txout, key_derivation_params, revocation_pubkey
+    )
+
+    assert descriptor.outpoint.serialize() == outpoint.serialize()
+    assert descriptor.per_commitment_point.serialize() == per_commitment_point.serialize()
+    assert descriptor.to_self_delay == to_self_delay
+    assert descriptor.output.serialize() == txout.serialize()
+    assert descriptor.key_derivation_params == key_derivation_params
+    assert descriptor.revocation_pubkey.serialize() == revocation_pubkey.serialize()
+
+    # This one has all atributes, no need to check the ones that are not there
+
+
 def test_static_output_counterparty_payment():
     outpoint = OutPoint.from_bytes(get_random_bytes(36))
     txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
@@ -56,6 +108,22 @@ def test_static_output_counterparty_payment():
     descriptor = SpendableOutputDescriptor.static_output_counterparty_payment(outpoint, txout, key_derivation_params)
 
     assert isinstance(descriptor, SpendableOutputDescriptor) and descriptor.type == "StaticOutputCounterpartyPayment"
+
+
+def test_static_output_counterparty_payment_getters():
+    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
+    key_derivation_params = (get_random_int(8), get_random_int(8))
+    descriptor = SpendableOutputDescriptor.static_output_counterparty_payment(outpoint, txout, key_derivation_params)
+
+    assert descriptor.outpoint.serialize() == outpoint.serialize()
+    assert descriptor.output.serialize() == txout.serialize()
+    assert descriptor.key_derivation_params == key_derivation_params
+
+    # Check no other getters are available
+    local_attributes = ["outpoint", "output", "key_derivation_params"]
+
+    check_not_available_getters(descriptor, local_attributes, all_attributes)
 
 
 # InMemoryChannelKeys
