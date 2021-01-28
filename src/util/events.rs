@@ -11,32 +11,13 @@ use crate::primitives::{PyOutPoint, PyScript};
 
 pub fn match_event_type(e: &Event) -> String {
     match e {
-        Event::FundingGenerationReady {
-            temporary_channel_id: _,
-            channel_value_satoshis: _,
-            output_script: _,
-            user_channel_id: _,
-        } => String::from("FundingGenerationReady"),
-        Event::FundingBroadcastSafe {
-            funding_txo: _,
-            user_channel_id: _,
-        } => String::from("FundingBroadcastSafe"),
-        Event::PaymentReceived {
-            payment_hash: _,
-            payment_secret: _,
-            amt: _,
-        } => String::from("PaymentReceived"),
-        Event::PaymentSent {
-            payment_preimage: _,
-        } => String::from("PaymentSent"),
-        Event::PaymentFailed {
-            payment_hash: _,
-            rejected_by_dest: _,
-        } => String::from("PaymentFailed"),
-        Event::PendingHTLCsForwardable {
-            time_forwardable: _,
-        } => String::from("PendingHTLCsForwardable"),
-        Event::SpendableOutputs { outputs: _ } => String::from("SpendableOutputs"),
+        Event::FundingGenerationReady { .. } => String::from("FundingGenerationReady"),
+        Event::FundingBroadcastSafe { .. } => String::from("FundingBroadcastSafe"),
+        Event::PaymentReceived { .. } => String::from("PaymentReceived"),
+        Event::PaymentSent { .. } => String::from("PaymentSent"),
+        Event::PaymentFailed { .. } => String::from("PaymentFailed"),
+        Event::PendingHTLCsForwardable { .. } => String::from("PendingHTLCsForwardable"),
+        Event::SpendableOutputs { .. } => String::from("SpendableOutputs"),
     }
 }
 
@@ -157,9 +138,7 @@ impl PyEvent {
         match self.inner {
             Event::FundingGenerationReady {
                 temporary_channel_id: t,
-                channel_value_satoshis: _,
-                output_script: _,
-                user_channel_id: _,
+                ..
             } => Ok(PyBytes::new(py, &t).into()),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
                 "{} does not have temporary_channel_id",
@@ -172,10 +151,8 @@ impl PyEvent {
     fn channel_value_satoshis(&self) -> PyResult<u64> {
         match self.inner {
             Event::FundingGenerationReady {
-                temporary_channel_id: _,
                 channel_value_satoshis: v,
-                output_script: _,
-                user_channel_id: _,
+                ..
             } => Ok(v),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
                 "{} does not have channel_value_satoshis",
@@ -188,10 +165,7 @@ impl PyEvent {
     fn output_script(&self) -> PyResult<PyScript> {
         match &self.inner {
             Event::FundingGenerationReady {
-                temporary_channel_id: _,
-                channel_value_satoshis: _,
-                output_script: s,
-                user_channel_id: _,
+                output_script: s, ..
             } => Ok(PyScript { inner: s.clone() }),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
                 "{} does not have output_script",
@@ -200,19 +174,15 @@ impl PyEvent {
         }
     }
 
-    // Shared amongst FundingGenerationReady and FundingBroadcastSafe
+    // Attributes shared amongst FundingGenerationReady and FundingBroadcastSafe
     #[getter]
     fn user_channel_id(&self) -> PyResult<u64> {
         match self.inner {
             Event::FundingGenerationReady {
-                temporary_channel_id: _,
-                channel_value_satoshis: _,
-                output_script: _,
-                user_channel_id: c,
+                user_channel_id: c, ..
             } => Ok(c),
             Event::FundingBroadcastSafe {
-                funding_txo: _,
-                user_channel_id: i,
+                user_channel_id: i, ..
             } => Ok(i),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
                 "{} does not have user_channel_id",
@@ -226,10 +196,7 @@ impl PyEvent {
     #[getter]
     fn funding_txo(&self) -> PyResult<PyOutPoint> {
         match self.inner {
-            Event::FundingBroadcastSafe {
-                funding_txo: o,
-                user_channel_id: _,
-            } => Ok(PyOutPoint { inner: o }),
+            Event::FundingBroadcastSafe { funding_txo: o, .. } => Ok(PyOutPoint { inner: o }),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
                 "{} does not have funding_txo",
                 self.event_type
@@ -245,13 +212,10 @@ impl PyEvent {
     fn payment_hash(&self) -> PyResult<PyPaymentHash> {
         match self.inner {
             Event::PaymentReceived {
-                payment_hash: h,
-                payment_secret: _,
-                amt: _,
+                payment_hash: h, ..
             } => Ok(PyPaymentHash { inner: h }),
             Event::PaymentFailed {
-                payment_hash: h,
-                rejected_by_dest: _,
+                payment_hash: h, ..
             } => Ok(PyPaymentHash { inner: h }),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
                 "{} does not have payment_hash",
@@ -264,9 +228,7 @@ impl PyEvent {
     fn payment_secret(&self) -> PyResult<Option<PyPaymentSecret>> {
         match self.inner {
             Event::PaymentReceived {
-                payment_hash: _,
-                payment_secret: s,
-                amt: _,
+                payment_secret: s, ..
             } => Ok(match s {
                 Some(secret) => Some(PyPaymentSecret { inner: secret }),
                 None => None,
@@ -281,11 +243,7 @@ impl PyEvent {
     #[getter]
     fn amt(&self) -> PyResult<u64> {
         match self.inner {
-            Event::PaymentReceived {
-                payment_hash: _,
-                payment_secret: _,
-                amt: a,
-            } => Ok(a),
+            Event::PaymentReceived { amt: a, .. } => Ok(a),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
                 "{} does not have amt",
                 self.event_type
@@ -314,8 +272,8 @@ impl PyEvent {
     fn rejected_by_dest(&self) -> PyResult<bool> {
         match self.inner {
             Event::PaymentFailed {
-                payment_hash: _,
                 rejected_by_dest: r,
+                ..
             } => Ok(r),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
                 "{} does not have rejected_by_dest",
