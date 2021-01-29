@@ -205,14 +205,14 @@ def test_outpoint_init():
 
 
 def test_outpoint_from_bytes():
-    assert isinstance(OutPoint.from_bytes(get_random_bytes(36)), OutPoint)
+    assert isinstance(OutPoint.from_bytes(get_random_bytes(34)), OutPoint)
 
 
 def test_outpoint_from_bytes_wrong_size():
-    with pytest.raises(ValueError, match="Outpoint data must be 36-bytes long"):
+    with pytest.raises(ValueError, match="Outpoint data must be 34-bytes long"):
         OutPoint.from_bytes(get_random_bytes(35))
 
-    with pytest.raises(ValueError, match="Outpoint data must be 36-bytes long"):
+    with pytest.raises(ValueError, match="Outpoint data must be 34-bytes long"):
         OutPoint.from_bytes(get_random_bytes(37))
 
 
@@ -227,12 +227,12 @@ def test_outpoint_getters():
 
 def test_outpoint_serialize():
     # The last 4 bits of the index are zeroes for LN (indexes are bound to 2-bytes)
-    outpoint = get_random_bytes(36)
+    outpoint = get_random_bytes(34)
     assert OutPoint.from_bytes(outpoint).serialize() == outpoint[:34] + b"\x00\x00"
 
 
 def test_outpoint_str():
-    outpoint = get_random_bytes(36)
+    outpoint = get_random_bytes(34)
     assert str(OutPoint.from_bytes(outpoint)) == outpoint.hex()[:68] + "0000"
 
 

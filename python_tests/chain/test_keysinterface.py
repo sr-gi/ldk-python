@@ -45,7 +45,7 @@ all_attributes = set(
 
 
 def test_static_output():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
     descriptor = SpendableOutputDescriptor.static_output(outpoint, txout)
 
@@ -53,7 +53,7 @@ def test_static_output():
 
 
 def test_static_output_getters():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
     descriptor = SpendableOutputDescriptor.static_output(outpoint, txout)
 
@@ -67,7 +67,7 @@ def test_static_output_getters():
 
 
 def test_dynamic_output_pwsh():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     per_commitment_point = PublicKey(get_random_pk_bytes())
     to_self_delay = 20
     txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
@@ -81,7 +81,7 @@ def test_dynamic_output_pwsh():
 
 
 def test_dynamic_output_pwsh_getters():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     per_commitment_point = PublicKey(get_random_pk_bytes())
     to_self_delay = 20
     txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
@@ -102,7 +102,7 @@ def test_dynamic_output_pwsh_getters():
 
 
 def test_static_output_counterparty_payment():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
     key_derivation_params = (get_random_int(8), get_random_int(8))
     descriptor = SpendableOutputDescriptor.static_output_counterparty_payment(outpoint, txout, key_derivation_params)
@@ -111,7 +111,7 @@ def test_static_output_counterparty_payment():
 
 
 def test_static_output_counterparty_payment_getters():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
     key_derivation_params = (get_random_int(8), get_random_int(8))
     descriptor = SpendableOutputDescriptor.static_output_counterparty_payment(outpoint, txout, key_derivation_params)

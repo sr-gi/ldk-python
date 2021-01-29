@@ -33,7 +33,7 @@ def channel_monitor_data(in_mem_chan_keys, holder_commitment_tx):
     shutdown_pk = PublicKey(get_random_pk_bytes())
     on_counterparty_tx_csv = 20
     destination_script = Script(get_random_bytes((40)))
-    funding_info = (OutPoint.from_bytes(get_random_bytes(36)), Script(get_random_bytes(50)))
+    funding_info = (OutPoint.from_bytes(get_random_bytes(34)), Script(get_random_bytes(50)))
     counterparty_htlc_base_key = PublicKey(get_random_pk_bytes())
     counterparty_delayed_payment_base_key = PublicKey(get_random_pk_bytes())
     on_holder_tx_csv = 30
@@ -225,12 +225,12 @@ def test_htlc_event_getters(htlc_update_data):
 
 
 def test_commitment_tx_broadcasted():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     assert isinstance(MonitorEvent.commitment_tx_broadcasted(outpoint), MonitorEvent)
 
 
 def test_commitment_tx_broadcasted_getters():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     event = MonitorEvent.commitment_tx_broadcasted(outpoint)
 
     assert event.type == "CommitmentTxBroadcasted"
@@ -270,12 +270,12 @@ def test_persist_empty():
 
 def test_persist_new_channel(channel_monitor):
     persister = Persist(Persister())
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     persister.persist_new_channel(outpoint, channel_monitor)
 
 
 def test_update_persisted_channel(channel_monitor, channel_monitor_update_data):
     persister = Persist(Persister())
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     update = ChannelMonitorUpdate.from_bytes(channel_monitor_update_data)
     persister.update_persisted_channel(outpoint, update, channel_monitor)

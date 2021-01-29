@@ -300,13 +300,18 @@ impl PyOutPoint {
 
     #[staticmethod]
     pub fn from_bytes(data: &[u8]) -> PyResult<Self> {
-        if data.len() != 36 {
+        if data.len() != 34 {
             return Err(exceptions::PyValueError::new_err(format!(
-                "Outpoint data must be 36-bytes long"
+                "Outpoint data must be 34-bytes long"
             )));
         }
 
-        match deserialize::<BitcoinOutPoint>(data) {
+        // We'll use the Bitcoin create to deserialize, so outpoints are expected
+        // to be u32 instead of u16.
+        let mut filled_data = data.to_vec();
+        filled_data.extend([0, 0].iter());
+
+        match deserialize::<BitcoinOutPoint>(&filled_data) {
             Ok(x) => Ok(PyOutPoint::new(PyTxId { inner: x.txid }, x.vout as u16)),
             Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
         }

@@ -51,14 +51,14 @@ def test_funding_generation_ready_getters():
 
 
 def test_funding_broadcasting_safe():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     user_channel_id = get_random_int(8)
     event = Event.funding_broadcasting_safe(outpoint, user_channel_id)
     assert isinstance(event, Event) and event.type == "FundingBroadcastSafe"
 
 
 def test_funding_broadcasting_safe_getters():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     user_channel_id = get_random_int(8)
     event = Event.funding_broadcasting_safe(outpoint, user_channel_id)
 
@@ -155,7 +155,7 @@ def test_pending_htlcs_forwardable():
 
 
 def test_spendable_outputs():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     output = TxOut(get_random_int(8), Script(get_random_bytes(50)))
     descriptor = SpendableOutputDescriptor.static_output(outpoint, output)
     event = Event.spendable_outputs([descriptor])
@@ -163,7 +163,7 @@ def test_spendable_outputs():
 
 
 def test_spendable_outputs_getters():
-    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
     output = TxOut(get_random_int(8), Script(get_random_bytes(50)))
     descriptor = SpendableOutputDescriptor.static_output(outpoint, output)
     event = Event.spendable_outputs([descriptor])
