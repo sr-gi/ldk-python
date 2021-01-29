@@ -17,11 +17,19 @@ use crate::primitives::{
 use crate::util::events::{match_event_type, PyEvent};
 
 use lightning::chain::channelmonitor::{
-    ChannelMonitor, ChannelMonitorUpdate, ChannelMonitorUpdateErr, MonitorEvent, Persist,
+    ChannelMonitor, ChannelMonitorUpdate, ChannelMonitorUpdateErr, HTLCUpdate, MonitorEvent,
+    Persist,
 };
 use lightning::chain::keysinterface::InMemoryChannelKeys;
 use lightning::chain::transaction::OutPoint;
 use lightning::util::ser::{Readable, Writeable};
+
+pub fn match_monitor_event(o: &MonitorEvent) -> String {
+    match o {
+        MonitorEvent::HTLCEvent { .. } => String::from("HTLCEvent"),
+        MonitorEvent::CommitmentTxBroadcasted { .. } => String::from("CommitmentTxBroadcasted"),
+    }
+}
 
 #[pyclass(unsendable, name=InMemoryKeysChannelMonitor)]
 #[derive(Clone)]
@@ -69,6 +77,20 @@ impl PyInMemoryKeysChannelMonitor {
 #[pymethods]
 impl PyInMemoryKeysChannelMonitor {
     // FIXME: serialize_for_disk is missing, but looks like that method won't be longer available in 0.0.13. Double check and implement otherwise.
+
+    // FIXME: serialize crashes atm, try with 0.0.13 so you don't need new
+    // to test the ChannelMonitor (uncommenting this requires reimplementing VecWriter)
+    // fn serialize(&self, py: Python) {
+    //     let mut writer = VecWriter(Vec::new());
+    //     let cm = unsafe { self.inner.as_ref().unwrap() };
+    //     match cm.serialize_for_disk(&mut writer) {
+    //         Ok(_) => Ok(PyBytes::new(py, &writer.0).into()),
+    //         Err(e) => Err(exceptions::PyValueError::new_err(format!(
+    //             "Cannot serialize ChannelMonitor -> {}",
+    //             e
+    //         ))),
+    //     }
+    // }
 
     fn update_monitor(
         &mut self,
@@ -129,7 +151,10 @@ impl PyInMemoryKeysChannelMonitor {
         let cm = unsafe { self.inner.as_mut().unwrap() };
         let mut monitor_events: Vec<PyMonitorEvent> = vec![];
         for event in cm.get_and_clear_pending_monitor_events().into_iter() {
-            monitor_events.push(PyMonitorEvent { inner: event })
+            monitor_events.push(PyMonitorEvent {
+                event_type: match_monitor_event(&event),
+                inner: event,
+            })
         }
 
         monitor_events
@@ -269,6 +294,78 @@ create_exception!(
 #[derive(Clone)]
 pub struct PyMonitorEvent {
     pub inner: MonitorEvent,
+    pub event_type: String,
+}
+
+#[pymethods]
+impl PyMonitorEvent {
+    #[staticmethod]
+    fn htlc_event(htlc_update: PyHTLCUpdate) -> Self {
+        let event = MonitorEvent::HTLCEvent(htlc_update.inner);
+        PyMonitorEvent {
+            event_type: match_monitor_event(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn commitment_tx_broadcasted(outpoint: PyOutPoint) -> Self {
+        let event = MonitorEvent::CommitmentTxBroadcasted(outpoint.inner);
+        PyMonitorEvent {
+            event_type: match_monitor_event(&event),
+            inner: event,
+        }
+    }
+
+    #[getter]
+    fn get_type(&self) -> String {
+        self.event_type.clone()
+    }
+
+    #[getter]
+    fn htlc_update(&self) -> PyResult<PyHTLCUpdate> {
+        match &self.inner {
+            MonitorEvent::HTLCEvent(h) => Ok(PyHTLCUpdate { inner: h.clone() }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have htlc_update",
+                self.event_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn outpoint(&self) -> PyResult<PyOutPoint> {
+        match self.inner {
+            MonitorEvent::CommitmentTxBroadcasted(o) => Ok(PyOutPoint { inner: o }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have outpoint",
+                self.event_type
+            ))),
+        }
+    }
+}
+
+#[pyclass(name=HTLCUpdate)]
+#[derive(Clone)]
+pub struct PyHTLCUpdate {
+    pub inner: HTLCUpdate,
+}
+
+#[pymethods]
+impl PyHTLCUpdate {
+    #[staticmethod]
+    fn from_bytes(mut data: &[u8]) -> PyResult<Self> {
+        match HTLCUpdate::read(&mut data) {
+            Ok(x) => Ok(PyHTLCUpdate { inner: x }),
+            Err(_) => Err(exceptions::PyValueError::new_err(
+                "Cannot build HTLCUpdate with the given data",
+            )),
+        }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.encode()).into()
+    }
 }
 
 #[pyclass(name=Persist)]

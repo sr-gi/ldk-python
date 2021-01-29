@@ -1,5 +1,5 @@
 import pytest
-from conftest import Empty, get_random_bytes, get_random_pk_bytes, get_random_int
+from conftest import Empty, get_random_bytes, get_random_pk_bytes, get_random_int, check_not_available_getters
 
 from python_tests.test_logger import Logger
 from python_tests.chain.test_keysinterface import in_mem_chan_keys
@@ -185,6 +185,69 @@ def test_channel_monitor_update_serde(channel_monitor_update_data):
     chanel_monitor_update = ChannelMonitorUpdate.from_bytes(channel_monitor_update_data)
     assert isinstance(chanel_monitor_update, ChannelMonitorUpdate)
     assert chanel_monitor_update.serialize() == channel_monitor_update_data
+
+
+def test_channel_monitor_getters(channel_monitor_update_data):
+    chanel_monitor_update = ChannelMonitorUpdate.from_bytes(channel_monitor_update_data)
+
+    # The update if is encoded in the first 64 bits of the data
+    # https://github.com/rust-bitcoin/rust-lightning/blob/v0.0.12/lightning/src/chain/channelmonitor.rs#L102
+    local_update_id = int.from_bytes(channel_monitor_update_data[:8], "big")
+    assert chanel_monitor_update.update_id == local_update_id
+
+
+# MONITOR EVENT
+
+all_attributes = set(["htlc_update", "outpoint"])
+
+
+@pytest.fixture
+def htlc_update_data():
+    return bytes.fromhex(
+        "66e1e6cfeca14fc6fd560c6e7f453710929f41a4a0bb2b52abdec91b0986820d212950006fedd34d7d306ca1049aec7c52d2be23dcb5922499fed6f917b0a37c6d010001010101010101010101010101010101010101010101010101010101010101010000000000000000"
+    )
+
+
+def test_htlc_event(htlc_update_data):
+    htlc_update = HTLCUpdate.from_bytes(htlc_update_data)
+    assert isinstance(MonitorEvent.htlc_event(htlc_update), MonitorEvent)
+
+
+def test_htlc_event_getters(htlc_update_data):
+    htlc_update = HTLCUpdate.from_bytes(htlc_update_data)
+    event = MonitorEvent.htlc_event(htlc_update)
+
+    assert event.type == "HTLCEvent"
+    assert event.htlc_update.serialize() == htlc_update_data
+
+    # Check no other getters are available
+    check_not_available_getters(event, ["htlc_update"], all_attributes)
+
+
+def test_commitment_tx_broadcasted():
+    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    assert isinstance(MonitorEvent.commitment_tx_broadcasted(outpoint), MonitorEvent)
+
+
+def test_commitment_tx_broadcasted_getters():
+    outpoint = OutPoint.from_bytes(get_random_bytes(36))
+    event = MonitorEvent.commitment_tx_broadcasted(outpoint)
+
+    assert event.type == "CommitmentTxBroadcasted"
+    assert event.outpoint.serialize() == outpoint.serialize()
+
+    # Check no other getters are available
+    check_not_available_getters(event, ["outpoint"], all_attributes)
+
+
+# HTLC UPDATE
+def test_htlc_update(htlc_update_data):
+    assert isinstance(HTLCUpdate.from_bytes(htlc_update_data), HTLCUpdate)
+
+
+def test_htlc_update_serialize(htlc_update_data):
+    update = HTLCUpdate.from_bytes(htlc_update_data)
+    assert update.serialize() == htlc_update_data
 
 
 # PERSIST
