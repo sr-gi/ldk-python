@@ -11,6 +11,7 @@ from python_tests.chain.test_keysinterface import keys_manager
 from ldk_python.chain import Watch
 from ldk_python.util.errors import *
 from ldk_python.logger import LDKLogger
+from ldk_python.ln.msgs import NetAddress
 from ldk_python.ln.channelmanager import *
 from ldk_python.util.config import UserConfig
 from ldk_python.routing.router import Route, RouteHop
@@ -245,9 +246,9 @@ def create_hop(pk, short_chan_id):
     return RouteHop(pk, nfeatures, short_chan_id, cfeatures, fee_msat, cltv_expiry_delta)
 
 
-def get_random_route(first_hop_pk):
+def get_random_route(first_hop):
     # Get a random numbert of hops [1-7]
-    hops = []
+    hops = [first_hop]
     for i in range(randint(0, 7) + 1):
         pk = PublicKey(get_random_pk_bytes())
         short_chan_id = get_random_int(8)
@@ -261,7 +262,7 @@ def test_channel_manager(channel_manager):
 
 def test_create_channel(channel_manager):
     # Checks there's no error returned
-    assert create_channel(channel_manager) == None
+    create_channel(channel_manager)
 
 
 def test_list_channels(channel_manager):
@@ -302,6 +303,8 @@ def test_force_close_channel(channel_manager):
 def test_force_close_channel_non_existent(channel_manager):
     # FIXME: Force close does not raise errors if the channel does not exist
     # Check why and if this can be tested as a blackblock then
+    # FIXME: (cont). This was fixed in https://github.com/rust-bitcoin/rust-lightning/pull/777
+    # Update it for the 0.0.13 bindings
     # with pytest.raises(ChannelUnavailable):
     #     channel_manager.force_close_channel(get_random_bytes(32))
     pass
@@ -316,4 +319,64 @@ def test_force_close_all_channels(channel_manager):
     assert len(channel_manager.list_usable_channels()) == 0
 
 
-# FIXME: There are multiple tests missing here. May need additional components to test some of the functionality. Leaving it from where they are implemented.
+# FIXME: Check how to force the short_channel_id to be created
+# def test_send_payment(channel_manager):
+#     # We need the first hop to be real
+#     create_channel(channel_manager)
+#     for c in channel_manager.list_channels():
+#         print(c.channel_id, c.short_channel_id)
+#     first_hop_pk = c.remote_network_id
+#     first_hop_short_chan_id = get_random_int(8)
+#     first_hop = create_hop(first_hop_pk, first_hop_short_chan_id)
+
+#     # The rest of the route can be completely random
+#     route = get_random_route(first_hop)
+#     payment_hash = PaymentHash(get_random_bytes(32))
+#     payment_secret = PaymentSecret(get_random_bytes(32))
+
+#     channel_manager.send_payment(route, payment_hash, payment_secret)
+
+
+def test_funding_transaction_generated(channel_manager):
+    tmp_funding_txid = get_random_bytes(32)
+    funding_txo = OutPoint.from_bytes(get_random_bytes(34))
+    channel_manager.funding_transaction_generated(tmp_funding_txid, funding_txo)
+
+
+def test_broadcast_node_announcement(channel_manager):
+    rgb = [120, 30, 45]
+    alias = get_random_bytes(32)
+    addresses = [NetAddress.ipv4([127, 0, 0, 1], 4545)]
+
+    channel_manager.broadcast_node_announcement(rgb, alias, addresses)
+
+
+def test_process_pending_htlc_forwards(channel_manager):
+    channel_manager.process_pending_htlc_forwards()
+
+
+def test_timer_chan_freshness_every_min(channel_manager):
+    channel_manager.timer_chan_freshness_every_min()
+
+
+def test_fail_htlc_backwards(channel_manager):
+    payment_hash = PaymentHash(get_random_bytes(32))
+    payment_secret = PaymentSecret(get_random_bytes(32))
+    channel_manager.fail_htlc_backwards(payment_hash, payment_secret)
+
+
+def tesst_claim_funds(channel_manager):
+    payment_hash = PaymentHash(get_random_bytes(32))
+    payment_secret = PaymentSecret(get_random_bytes(32))
+    expected_amount = get_random_int(64)
+    channel_manager.claim_funds(payment_hash, payment_secret, expected_amount)
+
+
+def test_get_our_node_id(channel_manager):
+    assert isinstance(channel_manager.get_our_node_id(), PublicKey)
+
+
+def test_channel_monitor_updated(channel_manager):
+    funding_txo = OutPoint.from_bytes(get_random_bytes(34))
+    highest_applied_update_id = get_random_int(2)
+    channel_manager.channel_monitor_updated(funding_txo, highest_applied_update_id)
