@@ -173,6 +173,8 @@ impl PyInMemoryKeysChannelMonitor {
         events
     }
 
+    // FIXME: cannot seem to be able to capture pyo3_runtime.PanicException, comment out till next version
+    // SAFE-UNWIND-BOUNDARY
     fn get_latest_holder_commitment_txn(&mut self, logger: LDKLogger) -> Vec<PyTransaction> {
         let cm = unsafe { self.inner.as_mut().unwrap() };
         let mut txs: Vec<PyTransaction> = vec![];

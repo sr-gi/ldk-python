@@ -325,6 +325,8 @@ impl PyChannelManager {
         }
     }
 
+    // FIXME: This can panic but catch_unwind seems to be complicated here
+    // SAFE-UNWIND-BOUNDARY
     pub fn funding_transaction_generated(
         &self,
         temporary_channel_id: [u8; 32],
