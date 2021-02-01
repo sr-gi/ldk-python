@@ -75,12 +75,13 @@ impl PyBroadcasterInterface {
     }
 
     #[text_signature = "($self, confirmation_target)"]
-    fn broadcast_transaction(&self, transaction: PyTransaction) {
+    fn broadcast_transaction(&self, transaction: PyTransaction) -> PyResult<()> {
         Python::with_gil(|py| {
             let broadcast_interface = self.inner.as_ref(py);
-            let _: PyResult<PyTransaction> = process_python_return(
-                broadcast_interface.call_method1("broadcast_transaction", (transaction,)),
-            );
+            match broadcast_interface.call_method1("broadcast_transaction", (transaction,)) {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            }
         })
     }
 }
@@ -88,5 +89,6 @@ impl PyBroadcasterInterface {
 impl BroadcasterInterface for PyBroadcasterInterface {
     fn broadcast_transaction(&self, tx: &Transaction) {
         self.broadcast_transaction(PyTransaction { inner: tx.clone() })
+            .unwrap()
     }
 }

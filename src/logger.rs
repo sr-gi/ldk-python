@@ -27,38 +27,38 @@ impl LDKLogger {
     }
 
     #[text_signature = "($self, record, level)"]
-    fn log(&self, record: String, level: String) {
+    fn log(&self, record: String, level: String) -> PyResult<()> {
         Python::with_gil(|py| {
             let py_logger = self.inner.as_ref(py);
             match py_logger.call_method1("log", (record, level)) {
-                Ok(_) => (),
-                Err(error) => error.print(py),
-            };
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            }
         })
     }
 
     #[text_signature = "($self, record)"]
-    fn error(&self, record: String) {
+    fn error(&self, record: String) -> PyResult<()> {
         self.log(record, Level::Error.to_string())
     }
 
     #[text_signature = "($self, record)"]
-    fn warn(&self, record: String) {
+    fn warn(&self, record: String) -> PyResult<()> {
         self.log(record, Level::Warn.to_string())
     }
 
     #[text_signature = "($self, record)"]
-    fn info(&self, record: String) {
+    fn info(&self, record: String) -> PyResult<()> {
         self.log(record, Level::Info.to_string())
     }
 
     #[text_signature = "($self, record)"]
-    fn debug(&self, record: String) {
+    fn debug(&self, record: String) -> PyResult<()> {
         self.log(record, Level::Debug.to_string())
     }
 
     #[text_signature = "($self, record)"]
-    fn trace(&self, record: String) {
+    fn trace(&self, record: String) -> PyResult<()> {
         self.log(record, Level::Trace.to_string())
     }
 }
@@ -66,6 +66,6 @@ impl LDKLogger {
 impl Logger for LDKLogger {
     fn log(&self, record: &Record) {
         let message = format!("{}", record.args);
-        self.log(message, record.level.to_string())
+        self.log(message, record.level.to_string()).unwrap()
     }
 }
