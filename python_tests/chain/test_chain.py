@@ -10,13 +10,16 @@ from python_tests.chain.test_channelmonitor import (
     channel_monitor_update_data,
 )
 
-from ldk_python.chain import Watch
-from ldk_python.primitives import OutPoint
+from ldk_python.chain import Watch, Filter
+from ldk_python.primitives import OutPoint, TxId, Script
 from ldk_python.chain.channelmonitor import (
     ChannelMonitorUpdate,
     TemporaryChannelMonitorUpdateErr,
     PermanentChannelMonitorUpdateErr,
 )
+
+
+# WATCH
 
 
 class W:
@@ -72,3 +75,37 @@ def test_release_pending_monitor_events():
 
     # We've defined the dummy Watch implementation to return an empty list
     assert watcher.release_pending_monitor_events() == []
+
+
+# FILTER
+
+
+class F:
+    def register_tx(self, txid, script_pubkey):
+        print("Registering transaction")
+
+    def register_output(self, outpoint, script_pubkey):
+        print("Updating channel")
+
+
+def test_filter():
+    assert isinstance(Filter(F()), Filter)
+
+
+def test_filter_wrong_trait():
+    with pytest.raises(TypeError, match="Not all required methods are implemented"):
+        Filter(Empty())
+
+
+def test_register_tx():
+    f = Filter(F())
+    txid = TxId(get_random_bytes(32))
+    script = Script(get_random_bytes(50))
+    f.register_tx(txid, script)
+
+
+def test_register_output():
+    f = Filter(F())
+    outpoint = OutPoint.from_bytes(get_random_bytes(34))
+    script = Script(get_random_bytes(50))
+    f.register_output(outpoint, script)

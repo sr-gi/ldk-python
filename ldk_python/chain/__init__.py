@@ -4,3 +4,4 @@ from ..ldk_python import keysinterface
 from ..ldk_python import chain
 
 Watch = chain.Watch
+Filter = chain.Filter

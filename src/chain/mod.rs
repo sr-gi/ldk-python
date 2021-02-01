@@ -7,15 +7,17 @@ use crate::chain::channelmonitor::{
 };
 
 use crate::has_trait_bound;
-use crate::primitives::PyOutPoint;
+use crate::primitives::{PyOutPoint, PyScript, PyTxId};
 use crate::process_python_return;
 
+use bitcoin::blockdata::script::Script;
+use bitcoin::hash_types::Txid;
 use lightning::chain::channelmonitor::{
     ChannelMonitor, ChannelMonitorUpdate, ChannelMonitorUpdateErr, MonitorEvent,
 };
 use lightning::chain::keysinterface::InMemoryChannelKeys;
 use lightning::chain::transaction::OutPoint;
-use lightning::chain::Watch;
+use lightning::chain::{Filter, Watch};
 
 pub mod chaininterface;
 pub mod channelmonitor;
@@ -156,5 +158,67 @@ impl Watch for PyWatch {
             monitor_events.push(py_data.inner)
         }
         monitor_events
+    }
+}
+
+#[pyclass(name=Filter)]
+#[derive(Clone)]
+pub struct PyFilter {
+    inner: Py<PyAny>,
+}
+
+#[pymethods]
+impl PyFilter {
+    #[new]
+    fn new(filter: Py<PyAny>) -> PyResult<Self> {
+        if has_trait_bound(&filter, vec!["register_tx", "register_output"]) {
+            Ok(PyFilter { inner: filter })
+        } else {
+            Err(exceptions::PyTypeError::new_err(format!(
+                "Not all required methods are implemented by Filter"
+            )))
+        }
+    }
+
+    fn register_tx(&self, txid: PyTxId, script_pubkey: PyScript) -> PyResult<()> {
+        Python::with_gil(|py| {
+            let py_filter = self.inner.as_ref(py);
+            match py_filter.call_method1("register_tx", (txid, script_pubkey)) {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            }
+        })
+    }
+
+    fn register_output(&self, outpoint: PyOutPoint, script_pubkey: PyScript) -> PyResult<()> {
+        Python::with_gil(|py| {
+            let py_filter = self.inner.as_ref(py);
+            match py_filter.call_method1("register_output", (outpoint, script_pubkey)) {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            }
+        })
+    }
+}
+
+impl Filter for PyFilter {
+    fn register_tx(&self, txid: &Txid, script_pubkey: &Script) {
+        self.register_tx(
+            PyTxId { inner: *txid },
+            PyScript {
+                inner: script_pubkey.clone(),
+            },
+        )
+        .unwrap();
+    }
+
+    fn register_output(&self, outpoint: &OutPoint, script_pubkey: &Script) {
+        self.register_output(
+            PyOutPoint { inner: *outpoint },
+            PyScript {
+                inner: script_pubkey.clone(),
+            },
+        )
+        .unwrap();
     }
 }

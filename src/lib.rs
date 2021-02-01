@@ -72,6 +72,7 @@ pub fn logger(_: Python, m: &PyModule) -> PyResult<()> {
 /// Chain module for LDK
 fn chain(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<chain::PyWatch>()?;
+    m.add_class::<chain::PyFilter>()?;
     Ok(())
 }
 
