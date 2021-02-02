@@ -164,18 +164,19 @@ def test_in_memory_channel_keys_getters():
 
 # FIXME: I don't think there's any way to call on_accept from outside the crate
 # Testing the exceptions work for now at least
+# #PANIC-ERROR
 def test_counterparty_pubkeys_on_not_accepted(in_mem_chan_keys):
-    with pytest.raises(RuntimeError, match="method can only be called for accepted channels"):
+    with pytest.raises(BaseException, match="Option::unwrap()"):
         in_mem_chan_keys.counterparty_pubkeys()
 
 
 def test_counterparty_selected_contest_delay_on_not_accepted(in_mem_chan_keys):
-    with pytest.raises(RuntimeError, match="method can only be called for accepted channels"):
+    with pytest.raises(BaseException, match="Option::unwrap()"):
         in_mem_chan_keys.counterparty_selected_contest_delay()
 
 
 def test_holder_selected_contest_delay_on_not_accepted(in_mem_chan_keys):
-    with pytest.raises(RuntimeError, match="method can only be called for accepted channels"):
+    with pytest.raises(BaseException, match="Option::unwrap()"):
         in_mem_chan_keys.holder_selected_contest_delay()
 
 

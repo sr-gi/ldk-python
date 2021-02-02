@@ -1,5 +1,4 @@
 use std::ops::Deref;
-use std::panic;
 
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -257,35 +256,21 @@ impl PyInMemoryChannelKeys {
         PyBytes::new(py, &serialize(&self.inner.commitment_seed)).into()
     }
 
-    // FIXME: Not completely sure whether this three should be binded or not. Capturiong the panics for now.
-
-    fn counterparty_pubkeys(&self) -> PyResult<PyChannelPublicKeys> {
-        match panic::catch_unwind(|| PyChannelPublicKeys {
+    // FIXME: Not completely sure whether this three should be binded or not.
+    // The following methods panic if called on accepted channels
+    // #PANIC-ERROR
+    fn counterparty_pubkeys(&self) -> PyChannelPublicKeys {
+        PyChannelPublicKeys {
             inner: self.inner.counterparty_pubkeys().clone(),
-        }) {
-            Ok(x) => Ok(x),
-            Err(_) => Err(exceptions::PyRuntimeError::new_err(format!(
-                "method can only be called for accepted channels"
-            ))),
         }
     }
 
-    fn counterparty_selected_contest_delay(&self) -> PyResult<u16> {
-        match panic::catch_unwind(|| self.inner.counterparty_selected_contest_delay()) {
-            Ok(x) => Ok(x),
-            Err(_) => Err(exceptions::PyRuntimeError::new_err(format!(
-                "method can only be called for accepted channels"
-            ))),
-        }
+    fn counterparty_selected_contest_delay(&self) -> u16 {
+        self.inner.counterparty_selected_contest_delay()
     }
 
-    fn holder_selected_contest_delay(&self) -> PyResult<u16> {
-        match panic::catch_unwind(|| self.inner.holder_selected_contest_delay()) {
-            Ok(x) => Ok(x),
-            Err(_) => Err(exceptions::PyRuntimeError::new_err(format!(
-                "method can only be called for accepted channels"
-            ))),
-        }
+    fn holder_selected_contest_delay(&self) -> u16 {
+        self.inner.holder_selected_contest_delay()
     }
 }
 
