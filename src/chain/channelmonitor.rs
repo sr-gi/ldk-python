@@ -371,6 +371,7 @@ impl PyHTLCUpdate {
 }
 
 #[pyclass(name=Persist)]
+#[derive(Clone)]
 pub struct PyPersist {
     pub inner: Py<PyAny>,
 }
