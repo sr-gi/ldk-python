@@ -343,6 +343,16 @@ def test_funding_transaction_generated(channel_manager):
     channel_manager.funding_transaction_generated(tmp_funding_txid, funding_txo)
 
 
+def test_funding_transaction_generated_accepted_channel(channel_manager):
+    create_channel(channel_manager)
+    channel_id = channel_manager.list_channels()[0].channel_id
+    funding_txo = OutPoint.from_bytes(get_random_bytes(34))
+
+    # FIXME: #PANIC-ERROR
+    with pytest.raises(BaseException, match="other than immediately after initial handshake completion"):
+        channel_manager.funding_transaction_generated(channel_id, funding_txo)
+
+
 def test_broadcast_node_announcement(channel_manager):
     rgb = [120, 30, 45]
     alias = get_random_bytes(32)

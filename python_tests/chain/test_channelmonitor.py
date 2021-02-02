@@ -124,12 +124,11 @@ def test_get_and_clear_pending_events(channel_monitor):
     assert channel_monitor.get_and_clear_pending_events() == []
 
 
-# FIXME: cannot seem to be able to capture pyo3_runtime.PanicException, comment out till next version
 def test_get_latest_holder_commitment_txn(channel_monitor):
-    #     # Not the best UX at the moment, but looks like this may change for 0.0.13.
-    #     with pytest.raises(Exception, match="must accept before signing"):
-    #         channel_monitor.get_latest_holder_commitment_txn(LDKLogger(Logger()))
-    pass
+    # Not the best UX at the moment, but looks like this may change for 0.0.13.
+    # FIXME: #PANIC-ERROR
+    with pytest.raises(BaseException, match="must accept before signing"):
+        channel_monitor.get_latest_holder_commitment_txn(LDKLogger(Logger()))
 
 
 def test_block_connected(channel_monitor, tx):
