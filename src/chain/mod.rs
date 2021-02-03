@@ -20,6 +20,7 @@ use lightning::chain::transaction::OutPoint;
 use lightning::chain::{Filter, Watch};
 
 pub mod chaininterface;
+pub mod chainmonitor;
 pub mod channelmonitor;
 pub mod keysinterface;
 

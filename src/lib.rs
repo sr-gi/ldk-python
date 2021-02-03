@@ -85,6 +85,13 @@ fn chaininterface(_: Python, m: &PyModule) -> PyResult<()> {
 }
 
 #[pymodule]
+/// Chain monitor module for LDK
+fn chainmonitor(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<chain::chainmonitor::PyChainMonitor>()?;
+    Ok(())
+}
+
+#[pymodule]
 /// Channel monitor module for LDK.
 fn channelmonitor(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<chain::channelmonitor::PyInMemoryKeysChannelMonitor>()?;
@@ -235,6 +242,7 @@ fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(logger))?;
     m.add_wrapped(wrap_pymodule!(chain))?;
     m.add_wrapped(wrap_pymodule!(chaininterface))?;
+    m.add_wrapped(wrap_pymodule!(chainmonitor))?;
     m.add_wrapped(wrap_pymodule!(channelmonitor))?;
     m.add_wrapped(wrap_pymodule!(keysinterface))?;
     m.add_wrapped(wrap_pymodule!(chan_utils))?;
