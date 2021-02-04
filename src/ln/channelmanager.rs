@@ -5,8 +5,8 @@ use pyo3::types::PyBytes;
 use pyo3::PyObjectProtocol;
 
 use crate::chain::chaininterface::{PyBroadcasterInterface, PyFeeEstimator};
+use crate::chain::chainmonitor::PyChainMonitor;
 use crate::chain::keysinterface::PyKeysManager;
-use crate::chain::PyWatch;
 use crate::ln::features::PyInitFeatures;
 use crate::ln::msgs::PyNetAddress;
 use crate::logger::LDKLogger;
@@ -17,6 +17,7 @@ use crate::util::errors::match_api_error;
 
 use lightning::chain::chaininterface::{BroadcasterInterface, FeeEstimator};
 use lightning::chain::keysinterface::InMemoryChannelKeys;
+use lightning::chain::Watch;
 use lightning::ln::channelmanager as CM;
 use lightning::ln::channelmanager::{
     ChannelDetails, ChannelManager, PaymentHash, PaymentPreimage, PaymentSecret,
@@ -215,7 +216,7 @@ impl PyChannelDetails {
 pub struct PyChannelManager {
     pub inner: ChannelManager<
         InMemoryChannelKeys,
-        Box<PyWatch>,
+        Box<dyn Watch<Keys = InMemoryChannelKeys>>,
         Box<dyn BroadcasterInterface>,
         PyKeysManager,
         Box<dyn FeeEstimator>,
@@ -229,18 +230,19 @@ impl PyChannelManager {
     fn new(
         network: PyNetwork,
         fee_est: PyFeeEstimator,
-        chain_monitor: PyWatch,
+        chain_monitor: PyChainMonitor,
         tx_broadcaster: PyBroadcasterInterface,
         logger: LDKLogger,
         keys_manager: PyKeysManager,
         config: PyUserConfig,
         current_blockchain_height: usize,
     ) -> Self {
+        let cm = unsafe { Box::from_raw(chain_monitor.inner) };
         PyChannelManager {
             inner: ChannelManager::new(
                 network.inner,
                 Box::new(fee_est),
-                Box::new(chain_monitor),
+                cm,
                 Box::new(tx_broadcaster),
                 Box::new(logger),
                 keys_manager,

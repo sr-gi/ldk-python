@@ -5,10 +5,10 @@ from conftest import get_random_bytes, get_random_int, get_random_pk_bytes
 from python_tests.chain.test_chain import W
 from python_tests.test_logger import Logger
 from python_tests.chain.test_chaininterface import FeeEst
+from python_tests.chain.test_chainmonitor import chain_monitor
 from python_tests.chain.test_chaininterface import Broadcaster
-from python_tests.chain.test_keysinterface import keys_manager
+from python_tests.chain.test_keysinterface import keys_manager, in_mem_chan_keys
 
-from ldk_python.chain import Watch
 from ldk_python.util.errors import *
 from ldk_python.logger import LDKLogger
 from ldk_python.ln.msgs import NetAddress
@@ -196,11 +196,6 @@ def fee_estimator():
 
 
 @pytest.fixture()
-def watch():
-    return Watch(W())
-
-
-@pytest.fixture()
 def broadcaster_interface():
     return BroadcasterInterface(Broadcaster())
 
@@ -211,7 +206,7 @@ def logger():
 
 
 @pytest.fixture()
-def channel_manager(fee_estimator, watch, broadcaster_interface, logger, keys_manager):
+def channel_manager(fee_estimator, chain_monitor, broadcaster_interface, logger, keys_manager):
     network = Network.regtest()
     config = UserConfig.default()
     current_blockchain_height = 100
@@ -219,7 +214,7 @@ def channel_manager(fee_estimator, watch, broadcaster_interface, logger, keys_ma
     return ChannelManager(
         network,
         fee_estimator,
-        watch,
+        chain_monitor,
         broadcaster_interface,
         logger,
         keys_manager,

@@ -19,9 +19,10 @@ use crate::logger::LDKLogger;
 use crate::primitives::{PyBlockHeader, PyOutPoint, PyTransaction};
 use crate::util::events::{match_event_type, PyEvent};
 
-#[pyclass(name=ChainMonitor)]
+#[pyclass(unsendable, name=ChainMonitor)]
+#[derive(Clone)]
 pub struct PyChainMonitor {
-    pub inner: ChainMonitor<
+    pub inner: *mut ChainMonitor<
         InMemoryChannelKeys,
         Box<dyn Filter>,
         Box<dyn BroadcasterInterface>,
@@ -42,7 +43,7 @@ impl PyChainMonitor {
         persister: PyPersist,
     ) -> Self {
         PyChainMonitor {
-            inner: ChainMonitor::new(
+            inner: Box::into_raw(Box::new(ChainMonitor::new(
                 match chain_source {
                     Some(x) => Some(Box::new(x)),
                     None => None,
@@ -51,7 +52,7 @@ impl PyChainMonitor {
                 Box::new(logger),
                 Box::new(feeest),
                 Box::new(persister),
-            ),
+            ))),
         }
     }
 
@@ -66,13 +67,14 @@ impl PyChainMonitor {
         for (i, tx) in txdata.iter() {
             native_txdata.push((*i, &tx.inner))
         }
-        self.inner
-            .block_connected(&header.inner, &native_txdata, height)
+
+        let cm = unsafe { self.inner.as_ref().unwrap() };
+        cm.block_connected(&header.inner, &native_txdata, height)
     }
 
     fn block_disconnected(&self, header: PyBlockHeader, disconnected_height: u32) {
-        self.inner
-            .block_disconnected(&header.inner, disconnected_height)
+        let cm = unsafe { self.inner.as_ref().unwrap() };
+        cm.block_disconnected(&header.inner, disconnected_height)
     }
 
     fn watch_channel(
@@ -80,8 +82,9 @@ impl PyChainMonitor {
         funding_outpoint: PyOutPoint,
         monitor: PyInMemoryKeysChannelMonitor,
     ) -> PyResult<()> {
-        let cm = unsafe { Box::from_raw(monitor.inner) };
-        match self.inner.watch_channel(funding_outpoint.inner, *cm) {
+        let chain_monitor = unsafe { self.inner.as_ref().unwrap() };
+        let channel_monitor = unsafe { Box::from_raw(monitor.inner) };
+        match chain_monitor.watch_channel(funding_outpoint.inner, *channel_monitor) {
             Ok(_) => Ok(()),
             Err(e) => match e {
                 ChannelMonitorUpdateErr::TemporaryFailure => {
@@ -99,7 +102,8 @@ impl PyChainMonitor {
         funding_txo: PyOutPoint,
         update: PyChannelMonitorUpdate,
     ) -> PyResult<()> {
-        match self.inner.update_channel(funding_txo.inner, update.inner) {
+        let cm = unsafe { self.inner.as_ref().unwrap() };
+        match cm.update_channel(funding_txo.inner, update.inner) {
             Ok(_) => Ok(()),
             Err(e) => match e {
                 ChannelMonitorUpdateErr::TemporaryFailure => {
@@ -113,8 +117,9 @@ impl PyChainMonitor {
     }
 
     fn release_pending_monitor_events(&self) -> Vec<PyMonitorEvent> {
+        let cm = unsafe { self.inner.as_ref().unwrap() };
         let mut py_monitor_events = Vec::new();
-        for event in self.inner.release_pending_monitor_events().into_iter() {
+        for event in cm.release_pending_monitor_events().into_iter() {
             py_monitor_events.push(PyMonitorEvent {
                 event_type: match_monitor_event(&event),
                 inner: event,
@@ -124,8 +129,9 @@ impl PyChainMonitor {
     }
 
     fn get_and_clear_pending_events(&self) -> Vec<PyEvent> {
+        let cm = unsafe { self.inner.as_ref().unwrap() };
         let mut py_events: Vec<PyEvent> = vec![];
-        for event in self.inner.get_and_clear_pending_events().into_iter() {
+        for event in cm.get_and_clear_pending_events().into_iter() {
             py_events.push(PyEvent {
                 event_type: match_event_type(&event),
                 inner: event,
