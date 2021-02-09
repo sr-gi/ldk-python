@@ -4,6 +4,7 @@ SecretKey = primitives.SecretKey
 PublicKey = primitives.PublicKey
 Signature = primitives.Signature
 BlockHeader = primitives.BlockHeader
+BlockHash = primitives.BlockHash
 Script = primitives.Script
 TxId = primitives.TxId
 OutPoint = primitives.OutPoint

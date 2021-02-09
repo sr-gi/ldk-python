@@ -49,6 +49,7 @@ fn primitives(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<primitives::PyPublicKey>()?;
     m.add_class::<primitives::PySignature>()?;
     m.add_class::<primitives::PyBlockHeader>()?;
+    m.add_class::<primitives::PyBlockHash>()?;
     m.add_class::<primitives::PyScript>()?;
     m.add_class::<primitives::PyTxId>()?;
     m.add_class::<primitives::PyOutPoint>()?;
@@ -178,7 +179,34 @@ fn features(_: Python, m: &PyModule) -> PyResult<()> {
 #[pymodule]
 /// Messages module for LDK.
 fn msgs(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<ln::msgs::PyInit>()?;
+    m.add_class::<ln::msgs::PyErrorMessage>()?;
+    m.add_class::<ln::msgs::PyOpenChannel>()?;
+    m.add_class::<ln::msgs::PyAcceptChannel>()?;
+    m.add_class::<ln::msgs::PyFundingCreated>()?;
+    m.add_class::<ln::msgs::PyFundingSigned>()?;
+    m.add_class::<ln::msgs::PyFundingLocked>()?;
+    m.add_class::<ln::msgs::PyShutdown>()?;
+    m.add_class::<ln::msgs::PyClosingSigned>()?;
+    m.add_class::<ln::msgs::PyUpdateAddHTLC>()?;
+    m.add_class::<ln::msgs::PyUpdateFulfillHTLC>()?;
+    m.add_class::<ln::msgs::PyUpdateFailHTLC>()?;
+    m.add_class::<ln::msgs::PyUpdateFailMalformedHTLC>()?;
+    m.add_class::<ln::msgs::PyCommitmentSigned>()?;
+    m.add_class::<ln::msgs::PyRevokeAndACK>()?;
+    m.add_class::<ln::msgs::PyUpdateFee>()?;
+    m.add_class::<ln::msgs::PyDataLossProtect>()?;
+    m.add_class::<ln::msgs::PyChannelReestablish>()?;
+    m.add_class::<ln::msgs::PyAnnouncementSignatures>()?;
     m.add_class::<ln::msgs::PyNetAddress>()?;
+    m.add_class::<ln::msgs::PyNodeAnnouncement>()?;
+    m.add_class::<ln::msgs::PyChannelAnnouncement>()?;
+    m.add_class::<ln::msgs::PyChannelUpdate>()?;
+    m.add_class::<ln::msgs::PyErrorAction>()?;
+    m.add_class::<ln::msgs::PyLightningError>()?;
+    m.add_class::<ln::msgs::PyHTLCFailChannelUpdate>()?;
+    m.add_class::<ln::msgs::PyChannelMessageHandler>()?;
+    m.add_class::<ln::msgs::PyRoutingMessageHandler>()?;
     Ok(())
 }
 

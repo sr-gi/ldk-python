@@ -3,11 +3,12 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use std::time::Duration;
 
-use lightning::util::events::Event;
+use lightning::util::events::{Event, MessageSendEvent, MessageSendEventsProvider};
 
 use crate::chain::keysinterface::{match_spendable_output_descriptor, PySpendableOutputDescriptor};
 use crate::ln::channelmanager::{PyPaymentHash, PyPaymentPreimage, PyPaymentSecret};
 use crate::primitives::{PyOutPoint, PyScript};
+use crate::{has_trait_bound, process_python_return};
 
 pub fn match_event_type(e: &Event) -> String {
     match e {
@@ -317,5 +318,50 @@ impl PyEvent {
                 self.event_type
             ))),
         }
+    }
+}
+
+// TODO: CHECK IF THIS NEEDS FURTHER BINDING
+#[pyclass(name=MessageSendEvent)]
+#[derive(Clone)]
+pub struct PyMessageSendEvent {
+    pub inner: MessageSendEvent,
+}
+
+#[pyclass(name=MessageSendEventsProvider)]
+#[derive(Clone)]
+pub struct PyMessageSendEventsProvider {
+    pub inner: Py<PyAny>,
+}
+
+#[pymethods]
+impl PyMessageSendEventsProvider {
+    #[new]
+    fn new(provider: Py<PyAny>) -> PyResult<Self> {
+        if has_trait_bound(&provider, vec!["get_and_clear_pending_msg_events"]) {
+            Ok(PyMessageSendEventsProvider { inner: provider })
+        } else {
+            Err(exceptions::PyTypeError::new_err(format!(
+                "Not all required methods are implemented by MessageSendEventsProvider"
+            )))
+        }
+    }
+
+    fn get_and_clear_pending_msg_events(&self) -> PyResult<Vec<PyMessageSendEvent>> {
+        Python::with_gil(|py| {
+            let py_provider = self.inner.as_ref(py);
+            process_python_return(py_provider.call_method0("get_and_clear_pending_msg_events"))
+        })
+    }
+}
+
+impl MessageSendEventsProvider for PyMessageSendEventsProvider {
+    fn get_and_clear_pending_msg_events(&self) -> Vec<MessageSendEvent> {
+        let mut native_events: Vec<MessageSendEvent> = vec![];
+        for event in self.get_and_clear_pending_msg_events().unwrap().into_iter() {
+            native_events.push(event.inner)
+        }
+
+        native_events
     }
 }

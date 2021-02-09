@@ -10,7 +10,7 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::OutPoint as BitcoinOutPoint;
 use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
 use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
-use bitcoin::hash_types::Txid;
+use bitcoin::hash_types::{BlockHash, Txid};
 use bitcoin::hashes::sha256;
 use bitcoin::hashes::Hash;
 use bitcoin::network::constants::Network;
@@ -219,6 +219,33 @@ impl PyBlockHeader {
 
 #[pyproto]
 impl PyObjectProtocol for PyBlockHeader {
+    fn __str__(&self) -> String {
+        serialize_hex(&self.inner)
+    }
+}
+
+#[pyclass(name=BlockHash)]
+#[derive(Clone, Eq, PartialEq, Hash)]
+pub struct PyBlockHash {
+    pub inner: BlockHash,
+}
+
+#[pymethods]
+impl PyBlockHash {
+    #[new]
+    pub fn new(data: [u8; 32]) -> Self {
+        PyBlockHash {
+            inner: deserialize(&data).unwrap(),
+        }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &serialize(&self.inner)).into()
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyBlockHash {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner)
     }
