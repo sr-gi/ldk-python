@@ -1,7 +1,8 @@
+from io import BytesIO
 import pytest
 from conftest import get_random_net_addr, get_random_bytes, get_random_pk_bytes, get_random_int
 
-from ldk_python.primitives import PublicKey
+from ldk_python.primitives import PublicKey, BlockHash
 from ldk_python.ln.msgs import *
 
 # INIT
@@ -36,6 +37,16 @@ def test_error_message_serialize(error_message_bytes):
     assert e_message.serialize() == error_message_bytes
 
 
+def test_error_message_getter(error_message_bytes):
+    e_message_io = BytesIO(error_message_bytes)
+    e_message = ErrorMessage.from_bytes(error_message_bytes)
+
+    assert e_message.channel_id == e_message_io.read(32)
+    data_len = len(e_message.data)
+    assert data_len == int.from_bytes(e_message_io.read(2), "big")
+    assert e_message.data == e_message_io.read(data_len).decode()
+
+
 # OPEN CHANNEL
 @pytest.fixture
 def open_channel_bytes():
@@ -51,6 +62,31 @@ def test_open_channel_from_bytes(open_channel_bytes):
 def test_open_channel_serialize(open_channel_bytes):
     open_channel = OpenChannel.from_bytes(open_channel_bytes)
     assert open_channel.serialize() == open_channel_bytes
+
+
+def test_open_channel_getters(open_channel_bytes):
+    open_channel_io = BytesIO(open_channel_bytes)
+    open_channel = OpenChannel.from_bytes(open_channel_bytes)
+
+    assert open_channel.chain_hash.serialize() == open_channel_io.read(32)
+    assert open_channel.temporary_channel_id == open_channel_io.read(32)
+    assert open_channel.funding_satoshis == int.from_bytes(open_channel_io.read(8), "big")
+    assert open_channel.push_msat == int.from_bytes(open_channel_io.read(8), "big")
+    assert open_channel.dust_limit_satoshis == int.from_bytes(open_channel_io.read(8), "big")
+    assert open_channel.max_htlc_value_in_flight_msat == int.from_bytes(open_channel_io.read(8), "big")
+    assert open_channel.channel_reserve_satoshis == int.from_bytes(open_channel_io.read(8), "big")
+    assert open_channel.htlc_minimum_msat == int.from_bytes(open_channel_io.read(8), "big")
+    assert open_channel.feerate_per_kw == int.from_bytes(open_channel_io.read(4), "big")
+    assert open_channel.to_self_delay == int.from_bytes(open_channel_io.read(2), "big")
+    assert open_channel.max_accepted_htlcs == int.from_bytes(open_channel_io.read(2), "big")
+    assert open_channel.funding_pubkey.serialize() == open_channel_io.read(33)
+    assert open_channel.revocation_basepoint.serialize() == open_channel_io.read(33)
+    assert open_channel.payment_point.serialize() == open_channel_io.read(33)
+    assert open_channel.delayed_payment_basepoint.serialize() == open_channel_io.read(33)
+    assert open_channel.htlc_basepoint.serialize() == open_channel_io.read(33)
+    assert open_channel.first_per_commitment_point.serialize() == open_channel_io.read(33)
+    assert open_channel.channel_flags == int.from_bytes(open_channel_io.read(1), "big")
+    assert open_channel.shutdown_scriptpubkey == None
 
 
 # ACCEPT CHANNEL
@@ -70,6 +106,27 @@ def test_accept_channel_serialize(accept_channel_bytes):
     assert accept_channel.serialize() == accept_channel_bytes
 
 
+def test_accept_channel_getters(accept_channel_bytes):
+    accept_channel_io = BytesIO(accept_channel_bytes)
+    accept_channel = AcceptChannel.from_bytes(accept_channel_bytes)
+
+    assert accept_channel.temporary_channel_id == accept_channel_io.read(32)
+    assert accept_channel.dust_limit_satoshis == int.from_bytes(accept_channel_io.read(8), "big")
+    assert accept_channel.max_htlc_value_in_flight_msat == int.from_bytes(accept_channel_io.read(8), "big")
+    assert accept_channel.channel_reserve_satoshis == int.from_bytes(accept_channel_io.read(8), "big")
+    assert accept_channel.htlc_minimum_msat == int.from_bytes(accept_channel_io.read(8), "big")
+    assert accept_channel.minimum_depth == int.from_bytes(accept_channel_io.read(4), "big")
+    assert accept_channel.to_self_delay == int.from_bytes(accept_channel_io.read(2), "big")
+    assert accept_channel.max_accepted_htlcs == int.from_bytes(accept_channel_io.read(2), "big")
+    assert accept_channel.funding_pubkey.serialize() == accept_channel_io.read(33)
+    assert accept_channel.revocation_basepoint.serialize() == accept_channel_io.read(33)
+    assert accept_channel.payment_point.serialize() == accept_channel_io.read(33)
+    assert accept_channel.delayed_payment_basepoint.serialize() == accept_channel_io.read(33)
+    assert accept_channel.htlc_basepoint.serialize() == accept_channel_io.read(33)
+    assert accept_channel.first_per_commitment_point.serialize() == accept_channel_io.read(33)
+    assert accept_channel.shutdown_scriptpubkey == None
+
+
 # FUNDING CREATED
 @pytest.fixture
 def funding_created_bytes():
@@ -85,6 +142,16 @@ def test_funding_created_from_bytes(funding_created_bytes):
 def test_funding_created_serialize(funding_created_bytes):
     funding_created = FundingCreated.from_bytes(funding_created_bytes)
     assert funding_created.serialize() == funding_created_bytes
+
+
+def test_funding_created_getters(funding_created_bytes):
+    funding_created_io = BytesIO(funding_created_bytes)
+    funding_created = FundingCreated.from_bytes(funding_created_bytes)
+
+    assert funding_created.temporary_channel_id == funding_created_io.read(32)
+    assert funding_created.funding_txid.serialize() == funding_created_io.read(32)
+    assert funding_created.funding_output_index == int.from_bytes(funding_created_io.read(2), "big")
+    assert funding_created.signature.serialize_compact() == funding_created_io.read(64)
 
 
 # FUNDING SIGNED
@@ -104,6 +171,14 @@ def test_funding_created_serialize(funding_signed_bytes):
     assert funding_signed.serialize() == funding_signed_bytes
 
 
+def test_funding_signed_getters(funding_signed_bytes):
+    funding_signed_io = BytesIO(funding_signed_bytes)
+    funding_signed = FundingSigned.from_bytes(funding_signed_bytes)
+
+    assert funding_signed.channel_id == funding_signed_io.read(32)
+    assert funding_signed.signature.serialize_compact() == funding_signed_io.read(64)
+
+
 # FUNDING LOCKED
 @pytest.fixture
 def funding_locked_bytes():
@@ -119,6 +194,14 @@ def test_funding_locked_from_bytes(funding_locked_bytes):
 def test_funding_locked_serialize(funding_locked_bytes):
     funding_locked = FundingLocked.from_bytes(funding_locked_bytes)
     assert funding_locked.serialize() == funding_locked_bytes
+
+
+def test_funding_locked_getters(funding_locked_bytes):
+    funding_locked_io = BytesIO(funding_locked_bytes)
+    funding_locked = FundingLocked.from_bytes(funding_locked_bytes)
+
+    assert funding_locked.channel_id == funding_locked_io.read(32)
+    assert funding_locked.next_per_commitment_point.serialize() == funding_locked_io.read(33)
 
 
 # SHUTDOWN
@@ -138,6 +221,14 @@ def test_shutdown_serialize(shutdown_bytes):
     assert shutdown.serialize() == shutdown_bytes
 
 
+def test_shutdown_getters(shutdown_bytes):
+    shutdown_io = BytesIO(shutdown_bytes)
+    shutdown = Shutdown.from_bytes(shutdown_bytes)
+
+    shutdown.channel_id == shutdown_io.read(32)
+    shutdown.scriptpubkey.serialize() == shutdown_io.read(36)
+
+
 # CLOSING SIGNED
 @pytest.fixture
 def closing_signed_bytes():
@@ -153,6 +244,15 @@ def test_closing_signed_from_bytes(closing_signed_bytes):
 def test_closing_signed_serialize(closing_signed_bytes):
     closing_signed = ClosingSigned.from_bytes(closing_signed_bytes)
     assert closing_signed.serialize() == closing_signed_bytes
+
+
+def test_closing_signed_getters(closing_signed_bytes):
+    closing_signed_io = BytesIO(closing_signed_bytes)
+    closing_signed = ClosingSigned.from_bytes(closing_signed_bytes)
+
+    assert closing_signed.channel_id == closing_signed_io.read(32)
+    assert closing_signed.fee_satoshis == int.from_bytes(closing_signed_io.read(8), "big")
+    assert closing_signed.signature.serialize_compact() == closing_signed_io.read(64)
 
 
 # UPDATE ADD HTLC
@@ -172,6 +272,17 @@ def test_update_add_htlc_serialize(update_add_htlc_bytes):
     assert update_add_htlc.serialize() == update_add_htlc_bytes
 
 
+def test_update_add_htlc_getters(update_add_htlc_bytes):
+    update_add_htlc_io = BytesIO(update_add_htlc_bytes)
+    update_add_htlc = UpdateAddHTLC.from_bytes(update_add_htlc_bytes)
+
+    assert update_add_htlc.channel_id == update_add_htlc_io.read(32)
+    assert update_add_htlc.htlc_id == int.from_bytes(update_add_htlc_io.read(8), "big")
+    assert update_add_htlc.ammount_msat == int.from_bytes(update_add_htlc_io.read(8), "big")
+    assert update_add_htlc.payment_hash.serialize() == update_add_htlc_io.read(32)
+    assert update_add_htlc.cltv_expiry == int.from_bytes(update_add_htlc_io.read(4), "big")
+
+
 # UPDATE FULFILL HTLC
 @pytest.fixture
 def update_fulfill_htlc_bytes():
@@ -187,6 +298,15 @@ def test_update_fulfill_htlc_from_bytes(update_fulfill_htlc_bytes):
 def test_update_fulfill_htlc_serialize(update_fulfill_htlc_bytes):
     update_fulfill_htlc = UpdateFulfillHTLC.from_bytes(update_fulfill_htlc_bytes)
     assert update_fulfill_htlc.serialize() == update_fulfill_htlc_bytes
+
+
+def test_update_fulfill_htlc_getters(update_fulfill_htlc_bytes):
+    update_fulfill_htlc_io = BytesIO(update_fulfill_htlc_bytes)
+    update_fulfill_htlc = UpdateFulfillHTLC.from_bytes(update_fulfill_htlc_bytes)
+
+    assert update_fulfill_htlc.channel_id == update_fulfill_htlc_io.read(32)
+    assert update_fulfill_htlc.htlc_id == int.from_bytes(update_fulfill_htlc_io.read(8), "big")
+    assert update_fulfill_htlc.payment_preimage.serialize() == update_fulfill_htlc_io.read(32)
 
 
 # UPDATE FAIL HTLC
@@ -206,6 +326,14 @@ def test_update_fail_htlc_serialize(update_fail_htlc_bytes):
     assert update_fail_htlc.serialize() == update_fail_htlc_bytes
 
 
+def test_update_fail_htlc_getters(update_fail_htlc_bytes):
+    update_fail_htlc_io = BytesIO(update_fail_htlc_bytes)
+    update_fail_htlc = UpdateFailHTLC.from_bytes(update_fail_htlc_bytes)
+
+    assert update_fail_htlc.channel_id == update_fail_htlc_io.read(32)
+    assert update_fail_htlc.htlc_id == int.from_bytes(update_fail_htlc_io.read(8), "big")
+
+
 # UPDATE FAIL MALFORMED HTLC
 @pytest.fixture
 def update_fail_maldormed_htlc_bytes():
@@ -221,6 +349,15 @@ def test_update_fail_malformed_htlc_from_bytes(update_fail_maldormed_htlc_bytes)
 def test_update_fail_malformed_htlc_serialize(update_fail_maldormed_htlc_bytes):
     update_fail_malformed_htlc = UpdateFailMalformedHTLC.from_bytes(update_fail_maldormed_htlc_bytes)
     assert update_fail_malformed_htlc.serialize() == update_fail_maldormed_htlc_bytes
+
+
+def test_update_fail_malformed_htlc_getters(update_fail_maldormed_htlc_bytes):
+    update_fail_malformed_htlc_io = BytesIO(update_fail_maldormed_htlc_bytes)
+    update_fail_malformed_htlc = UpdateFailMalformedHTLC.from_bytes(update_fail_maldormed_htlc_bytes)
+
+    assert update_fail_malformed_htlc.channel_id == update_fail_malformed_htlc_io.read(32)
+    assert update_fail_malformed_htlc.htlc_id == int.from_bytes(update_fail_malformed_htlc_io.read(8), "big")
+    assert update_fail_malformed_htlc.failure_code == int.from_bytes(update_fail_maldormed_htlc_bytes[-2:], "big")
 
 
 # COMMITMENT SIGNED
@@ -240,6 +377,15 @@ def test_commitment_signed_serialize(commitment_signed_bytes):
     assert commitment_signed.serialize() == commitment_signed_bytes
 
 
+def test_commitment_signed_getters(commitment_signed_bytes):
+    commitment_signed_io = BytesIO(commitment_signed_bytes)
+    commitment_signed = CommitmentSigned.from_bytes(commitment_signed_bytes)
+
+    assert commitment_signed.channel_id == commitment_signed_io.read(32)
+    assert commitment_signed.signature.serialize_compact() == commitment_signed_io.read(64)
+    assert commitment_signed.htlc_signatures == []
+
+
 # REVOKE AND ACK
 @pytest.fixture
 def revoke_and_ack_bytes():
@@ -257,6 +403,15 @@ def test_revoke_and_ack_serialize(revoke_and_ack_bytes):
     assert revoke_and_ack.serialize() == revoke_and_ack_bytes
 
 
+def test_revoke_and_ack_getters(revoke_and_ack_bytes):
+    revoke_and_ack_io = BytesIO(revoke_and_ack_bytes)
+    revoke_and_ack = RevokeAndACK.from_bytes(revoke_and_ack_bytes)
+
+    assert revoke_and_ack.channel_id == revoke_and_ack_io.read(32)
+    assert revoke_and_ack.per_commitment_secret == revoke_and_ack_io.read(32)
+    assert revoke_and_ack.next_per_commitment_point.serialize() == revoke_and_ack_io.read(33)
+
+
 # UPDATE FEE
 @pytest.fixture
 def update_fee_bytes():
@@ -272,12 +427,29 @@ def test_update_fee_serialize(update_fee_bytes):
     assert update_fee.serialize() == update_fee_bytes
 
 
+def test_update_fee_getters(update_fee_bytes):
+    update_fee_io = BytesIO(update_fee_bytes)
+    update_fee = UpdateFee.from_bytes(update_fee_bytes)
+
+    assert update_fee.channel_id == update_fee_io.read(32)
+    assert update_fee.feerate_per_kw == int.from_bytes(update_fee_io.read(4), "big")
+
+
 # DATA LOSS PROTECT
 def test_data_loss_protect():
     last_per_commitment_secret = get_random_bytes(32)
     current_per_commitment_point = PublicKey(get_random_pk_bytes())
 
     assert isinstance(DataLossProtect(last_per_commitment_secret, current_per_commitment_point), DataLossProtect)
+
+
+def test_data_loss_protect_getters():
+    last_per_commitment_secret = get_random_bytes(32)
+    current_per_commitment_point = PublicKey(get_random_pk_bytes())
+
+    data_loss_protect = DataLossProtect(last_per_commitment_secret, current_per_commitment_point)
+    assert data_loss_protect.your_last_per_commitment_secret == last_per_commitment_secret
+    assert data_loss_protect.my_current_per_commitment_point.serialize() == current_per_commitment_point.serialize()
 
 
 # CHANNEL REESTABLISH
@@ -297,6 +469,15 @@ def test_channel_reestablish_serialize(channel_reestablish_bytes):
     assert channel_reestablish.serialize() == channel_reestablish_bytes
 
 
+def test_channel_reestablish_getters(channel_reestablish_bytes):
+    channel_reestablish_io = BytesIO(channel_reestablish_bytes)
+    channel_reestablish = ChannelReestablish.from_bytes(channel_reestablish_bytes)
+
+    channel_reestablish.channel_id == channel_reestablish_io.read(32)
+    channel_reestablish.next_local_commitment_number == int.from_bytes(channel_reestablish_io.read(8), "big")
+    channel_reestablish.next_remote_commitment_number == int.from_bytes(channel_reestablish_io.read(8), "big")
+
+
 # ANNOUNCEMENT SIGNATURES
 @pytest.fixture
 def announcement_signatures_bytes():
@@ -312,6 +493,16 @@ def test_announcement_signatures_from_bytes(announcement_signatures_bytes):
 def test_announcement_signatures_serialize(announcement_signatures_bytes):
     announcement_signatures = AnnouncementSignatures.from_bytes(announcement_signatures_bytes)
     assert announcement_signatures.serialize() == announcement_signatures_bytes
+
+
+def test_announcement_signatures_getters(announcement_signatures_bytes):
+    announcement_signatures_io = BytesIO(announcement_signatures_bytes)
+    announcement_signatures = AnnouncementSignatures.from_bytes(announcement_signatures_bytes)
+
+    assert announcement_signatures.channel_id == announcement_signatures_io.read(32)
+    assert announcement_signatures.short_channel_id == int.from_bytes(announcement_signatures_io.read(8), "big")
+    assert announcement_signatures.node_signature.serialize_compact() == announcement_signatures_io.read(64)
+    assert announcement_signatures.bitcoin_signature.serialize_compact() == announcement_signatures_io.read(64)
 
 
 # NETADDRESS
@@ -330,7 +521,10 @@ def test_netaddress_ipv4_serialize():
     ipv4, port = get_random_net_addr("ipv4")
     netaddr = NetAddress.ipv4(ipv4, port)
 
-    ser_address = b"\x01" + ipv4 + bytes.fromhex(hex(port)[2:])
+    port_hex = format(port, "x")
+    if len(port_hex) % 2:
+        port_hex = "0" + port_hex
+    ser_address = b"\x01" + ipv4 + bytes.fromhex(port_hex)
     assert netaddr.serialize() == ser_address
 
 
@@ -349,7 +543,10 @@ def test_netaddress_ipv6_serialize():
     ipv6, port = get_random_net_addr("ipv6")
     netaddr = NetAddress.ipv6(ipv6, port)
 
-    ser_address = b"\x02" + ipv6 + bytes.fromhex(hex(port)[2:])
+    port_hex = format(port, "x")
+    if len(port_hex) % 2:
+        port_hex = "0" + port_hex
+    ser_address = b"\x02" + ipv6 + bytes.fromhex(port_hex)
     assert netaddr.serialize() == ser_address
 
 
@@ -368,7 +565,11 @@ def test_netaddress_onionv2_serialize():
     onionv2, port = get_random_net_addr("onionv2")
     netaddr = NetAddress.onionv2(onionv2, port)
 
-    ser_address = b"\x03" + onionv2 + bytes.fromhex(hex(port)[2:])
+    port_hex = format(port, "x")
+    if len(port_hex) % 2:
+        port_hex = "0" + port_hex
+
+    ser_address = b"\x03" + onionv2 + bytes.fromhex(port_hex)
     assert netaddr.serialize() == ser_address
 
 
@@ -391,11 +592,51 @@ def test_netaddress_onionv3_serialize():
     checksum = get_random_int(2)
     netaddr = NetAddress.onionv3(onionv3, checksum, version, port)
 
+    port_hex = format(port, "x")
+    if len(port_hex) % 2:
+        port_hex = "0" + port_hex
+
     ser_address = (
-        b"\x04" + onionv3 + bytes.fromhex(hex(checksum)[2:]) + version.to_bytes(1, "big") + bytes.fromhex(hex(port)[2:])
+        b"\x04" + onionv3 + bytes.fromhex(format(checksum, "x")) + version.to_bytes(1, "big") + bytes.fromhex(port_hex)
     )
 
     assert netaddr.serialize() == ser_address
+
+
+# UNSIGNED NODE ANNOUNCEMENT
+@pytest.fixture
+def unsigned_node_announcement_bytes():
+    return bytes.fromhex(
+        "0002ffff013413a7031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2020201010101010101010101010101010101010101010101010101010101010101010008d01fffefdfc260702fffefdfcfbfaf9f8f7f6f5f4f3f2f1f0260703fffefdfcfbfaf9f8f7f6260704fffefdfcfbfaf9f8f7f6f5f4f3f2f1f0efeeedecebeae9e8e7e6e5e4e3e2e1e00020102607216c280b5395a2546e7e4b2663e04f811622f15a4f92e83aa2e92ba2a573c139142c54ae63072a1ec1ee7dc0c04bde5c847806172aa05c92c22ae8e308d1d2693b12cc195ce0a2d1bda6a88befa19fa07f51caa75ce83837f28965600b8aacab0855ffb0e741ec5f7c41421e9829a9d48611c8c831f71be5ea73e66594977ffd"
+    )
+
+
+def test_unsigned_node_announcement_from_bytes(unsigned_node_announcement_bytes):
+    assert isinstance(UnsignedNodeAnnouncement.from_bytes(unsigned_node_announcement_bytes), UnsignedNodeAnnouncement)
+
+
+def test_unsigned_node_announcement_serialize(unsigned_node_announcement_bytes):
+    unsigned_node_announcement = UnsignedNodeAnnouncement.from_bytes(unsigned_node_announcement_bytes)
+    assert unsigned_node_announcement.serialize() == unsigned_node_announcement_bytes
+
+
+def test_unsigned_node_announcement_getters(unsigned_node_announcement_bytes):
+    unsigned_node_announcement_io = BytesIO(unsigned_node_announcement_bytes)
+    unsigned_node_announcement = UnsignedNodeAnnouncement.from_bytes(unsigned_node_announcement_bytes)
+
+    assert unsigned_node_announcement.features.serialize() == unsigned_node_announcement_io.read(4)
+    assert unsigned_node_announcement.timestamp == int.from_bytes(unsigned_node_announcement_io.read(4), "big")
+    assert unsigned_node_announcement.node_id.serialize() == unsigned_node_announcement_io.read(33)
+    assert unsigned_node_announcement.rgb == unsigned_node_announcement_io.read(3)
+    assert unsigned_node_announcement.alias == unsigned_node_announcement_io.read(32)
+
+    addr_len = int.from_bytes(unsigned_node_announcement_io.read(2), "big")
+    ser_addresses = b""
+    for address in unsigned_node_announcement.addresses:
+        ser_addresses += address.serialize()
+
+    # addr_len inclused the excess address data, so cannot read with addr_len
+    assert ser_addresses == unsigned_node_announcement_io.read(77)
 
 
 # NODE ANNOUNCEMENT
@@ -415,6 +656,48 @@ def test_node_announcement_serialize(node_announcement_bytes):
     assert node_announcement.serialize() == node_announcement_bytes
 
 
+def test_node_announcement_getters(node_announcement_bytes):
+    node_announcement_io = BytesIO(node_announcement_bytes)
+    node_announcement = NodeAnnouncement.from_bytes(node_announcement_bytes)
+
+    assert node_announcement.signature.serialize_compact() == node_announcement_io.read(64)
+    assert node_announcement.contents.serialize() == node_announcement_io.read()
+
+
+# UNSIGNED CHANNEL ANNOUNCEMENT
+@pytest.fixture
+def unsingned_channel_announcement_bytes():
+    return bytes.fromhex(
+        "0002ffff000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f00083a840000034d031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f024d4b6cd1361032ca9bd2aeb9d900aa4d45d9ead80ac9423374c451a7254d076602531fe6068134503d2723133227c867ac8fa6c83c537e9a44c3c5bdbdcb1fe33703462779ad4aad39514614751a71085f2f10e1c7a593e4e030efb5b8721ce55b0b"
+    )
+
+
+def test_unsigned_channel_announcement_from_bytes(unsingned_channel_announcement_bytes):
+    assert isinstance(
+        UnsignedChannelAnnouncement.from_bytes(unsingned_channel_announcement_bytes), UnsignedChannelAnnouncement
+    )
+
+
+def test_unsigned_channel_announcement_serialize(unsingned_channel_announcement_bytes):
+    unsigned_channel_announcement = UnsignedChannelAnnouncement.from_bytes(unsingned_channel_announcement_bytes)
+    assert unsigned_channel_announcement.serialize() == unsingned_channel_announcement_bytes
+
+
+def test_unsigned_channel_announcement_getters(unsingned_channel_announcement_bytes):
+    unsigned_channel_announcement_io = BytesIO(unsingned_channel_announcement_bytes)
+    unsigned_channel_announcement = UnsignedChannelAnnouncement.from_bytes(unsingned_channel_announcement_bytes)
+
+    assert unsigned_channel_announcement.features.serialize() == unsigned_channel_announcement_io.read(4)
+    assert unsigned_channel_announcement.chain_hash.serialize() == unsigned_channel_announcement_io.read(32)
+    assert unsigned_channel_announcement.short_channel_id == int.from_bytes(
+        unsigned_channel_announcement_io.read(8), "big"
+    )
+    assert unsigned_channel_announcement.node_id_1.serialize() == unsigned_channel_announcement_io.read(33)
+    assert unsigned_channel_announcement.node_id_2.serialize() == unsigned_channel_announcement_io.read(33)
+    assert unsigned_channel_announcement.bitcoin_key_1.serialize() == unsigned_channel_announcement_io.read(33)
+    assert unsigned_channel_announcement.bitcoin_key_2.serialize() == unsigned_channel_announcement_io.read(33)
+
+
 # CHANNEL ANNOUNCEMENT
 @pytest.fixture
 def channel_announcement_bytes():
@@ -432,6 +715,52 @@ def test_channel_announcement_serialize(channel_announcement_bytes):
     assert channel_announcement.serialize() == channel_announcement_bytes
 
 
+def test_channel_announcement_getters(channel_announcement_bytes):
+    channel_announcement_io = BytesIO(channel_announcement_bytes)
+    channel_announcement = ChannelAnnouncement.from_bytes(channel_announcement_bytes)
+
+    assert channel_announcement.node_signature_1.serialize_compact() == channel_announcement_io.read(64)
+    assert channel_announcement.node_signature_2.serialize_compact() == channel_announcement_io.read(64)
+    assert channel_announcement.bitcoin_signature_1.serialize_compact() == channel_announcement_io.read(64)
+    assert channel_announcement.bitcoin_signature_2.serialize_compact() == channel_announcement_io.read(64)
+    assert channel_announcement.contents.serialize() == channel_announcement_io.read()
+
+
+# UNSIGNED CHANNEL UPDATE
+@pytest.fixture
+def unsigned_channel_update_bytes():
+    return bytes.fromhex(
+        "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f00083a840000034d013413a70000009000000000000f42400000271000000014"
+    )
+
+
+def test_unsigned_channel_update_from_bytes(unsigned_channel_update_bytes):
+    assert isinstance(UnsignedChannelUpdate.from_bytes(unsigned_channel_update_bytes), UnsignedChannelUpdate)
+
+
+def test_channel_update_serialize(unsigned_channel_update_bytes):
+    unsigned_channel_update = UnsignedChannelUpdate.from_bytes(unsigned_channel_update_bytes)
+    assert unsigned_channel_update.serialize() == unsigned_channel_update_bytes
+
+
+def test_channel_update_getters(unsigned_channel_update_bytes):
+    unsigned_channel_update_io = BytesIO(unsigned_channel_update_bytes)
+    unsigned_channel_update = UnsignedChannelUpdate.from_bytes(unsigned_channel_update_bytes)
+
+    assert unsigned_channel_update.chain_hash.serialize() == unsigned_channel_update_io.read(32)
+    assert unsigned_channel_update.short_channel_id == int.from_bytes(unsigned_channel_update_io.read(8), "big")
+    assert unsigned_channel_update.timestamp == int.from_bytes(unsigned_channel_update_io.read(4), "big")
+    # Flags is u8 but u16 needs to be read.
+    assert unsigned_channel_update.flags == int.from_bytes(unsigned_channel_update_io.read(2), "big")
+    assert unsigned_channel_update.cltv_expiry_delta == int.from_bytes(unsigned_channel_update_io.read(2), "big")
+    assert unsigned_channel_update.htlc_minimum_msat == int.from_bytes(unsigned_channel_update_io.read(8), "big")
+    assert unsigned_channel_update.htlc_maximum_msat is None
+    assert unsigned_channel_update.fee_base_msat == int.from_bytes(unsigned_channel_update_io.read(4), "big")
+    assert unsigned_channel_update.fee_proportional_millionths == int.from_bytes(
+        unsigned_channel_update_io.read(4), "big"
+    )
+
+
 # CHANNEL UPDATE
 @pytest.fixture
 def channel_update_bytes():
@@ -447,6 +776,14 @@ def test_channel_update_from_bytes(channel_update_bytes):
 def test_channel_update_serialize(channel_update_bytes):
     channel_update = ChannelUpdate.from_bytes(channel_update_bytes)
     assert channel_update.serialize() == channel_update_bytes
+
+
+def test_channel_update_getters(channel_update_bytes):
+    channel_update_io = BytesIO(channel_update_bytes)
+    channel_update = ChannelUpdate.from_bytes(channel_update_bytes)
+
+    assert channel_update.signature.serialize_compact() == channel_update_io.read(64)
+    assert channel_update.contents.serialize() == channel_update_io.read()
 
 
 # ERROR ACTION

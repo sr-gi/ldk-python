@@ -199,8 +199,11 @@ fn msgs(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ln::msgs::PyChannelReestablish>()?;
     m.add_class::<ln::msgs::PyAnnouncementSignatures>()?;
     m.add_class::<ln::msgs::PyNetAddress>()?;
+    m.add_class::<ln::msgs::PyUnsignedNodeAnnouncement>()?;
     m.add_class::<ln::msgs::PyNodeAnnouncement>()?;
+    m.add_class::<ln::msgs::PyUnsignedChannelAnnouncement>()?;
     m.add_class::<ln::msgs::PyChannelAnnouncement>()?;
+    m.add_class::<ln::msgs::PyUnsignedChannelUpdate>()?;
     m.add_class::<ln::msgs::PyChannelUpdate>()?;
     m.add_class::<ln::msgs::PyErrorAction>()?;
     m.add_class::<ln::msgs::PyLightningError>()?;

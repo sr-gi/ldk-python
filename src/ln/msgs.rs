@@ -1,10 +1,10 @@
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
-use pyo3::PyObjectProtocol;
 
-use crate::ln::features::PyInitFeatures;
-use crate::primitives::PyPublicKey;
+use crate::ln::channelmanager::{PyPaymentHash, PyPaymentPreimage};
+use crate::ln::features::{PyChannelFeatures, PyInitFeatures, PyNodeFeatures};
+use crate::primitives::{PyBlockHash, PyPublicKey, PyScript, PySignature, PyTxId};
 use crate::util::events::PyMessageSendEvent;
 use crate::{has_trait_bound, process_python_return};
 
@@ -70,6 +70,16 @@ impl PyErrorMessage {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_data(&self) -> String {
+        self.inner.data.clone()
+    }
 }
 
 #[pyclass(name=OpenChannel)]
@@ -90,6 +100,118 @@ impl PyOpenChannel {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_chain_hash(&self) -> PyBlockHash {
+        PyBlockHash {
+            inner: self.inner.chain_hash,
+        }
+    }
+
+    #[getter]
+    fn get_temporary_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.temporary_channel_id).into()
+    }
+
+    #[getter]
+    fn get_funding_satoshis(&self) -> u64 {
+        self.inner.funding_satoshis
+    }
+
+    #[getter]
+    fn get_push_msat(&self) -> u64 {
+        self.inner.push_msat
+    }
+
+    #[getter]
+    fn get_dust_limit_satoshis(&self) -> u64 {
+        self.inner.dust_limit_satoshis
+    }
+
+    #[getter]
+    fn get_max_htlc_value_in_flight_msat(&self) -> u64 {
+        self.inner.max_htlc_value_in_flight_msat
+    }
+
+    #[getter]
+    fn get_channel_reserve_satoshis(&self) -> u64 {
+        self.inner.channel_reserve_satoshis
+    }
+
+    #[getter]
+    fn get_htlc_minimum_msat(&self) -> u64 {
+        self.inner.htlc_minimum_msat
+    }
+
+    #[getter]
+    fn get_feerate_per_kw(&self) -> u32 {
+        self.inner.feerate_per_kw
+    }
+
+    #[getter]
+    fn get_to_self_delay(&self) -> u16 {
+        self.inner.to_self_delay
+    }
+
+    #[getter]
+    fn get_max_accepted_htlcs(&self) -> u16 {
+        self.inner.max_accepted_htlcs
+    }
+
+    #[getter]
+    fn get_funding_pubkey(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.funding_pubkey,
+        }
+    }
+
+    #[getter]
+    fn get_revocation_basepoint(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.revocation_basepoint,
+        }
+    }
+
+    #[getter]
+    fn get_payment_point(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.payment_point,
+        }
+    }
+
+    #[getter]
+    fn get_delayed_payment_basepoint(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.delayed_payment_basepoint,
+        }
+    }
+
+    #[getter]
+    fn get_htlc_basepoint(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.htlc_basepoint,
+        }
+    }
+
+    #[getter]
+    fn get_first_per_commitment_point(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.first_per_commitment_point,
+        }
+    }
+
+    #[getter]
+    fn get_channel_flags(&self) -> u8 {
+        self.inner.channel_flags
+    }
+
+    #[getter]
+    fn get_shutdown_scriptpubkey(&self) -> Option<PyScript> {
+        match &self.inner.shutdown_scriptpubkey {
+            OptionalField::Present(x) => Some(PyScript { inner: x.clone() }),
+            OptionalField::Absent => None,
+        }
     }
 }
 
@@ -112,6 +234,96 @@ impl PyAcceptChannel {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_temporary_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.temporary_channel_id).into()
+    }
+
+    #[getter]
+    fn get_dust_limit_satoshis(&self) -> u64 {
+        self.inner.dust_limit_satoshis
+    }
+
+    #[getter]
+    fn get_max_htlc_value_in_flight_msat(&self) -> u64 {
+        self.inner.max_htlc_value_in_flight_msat
+    }
+
+    #[getter]
+    fn get_channel_reserve_satoshis(&self) -> u64 {
+        self.inner.channel_reserve_satoshis
+    }
+
+    #[getter]
+    fn get_htlc_minimum_msat(&self) -> u64 {
+        self.inner.htlc_minimum_msat
+    }
+
+    #[getter]
+    fn get_minimum_depth(&self) -> u32 {
+        self.inner.minimum_depth
+    }
+
+    #[getter]
+    fn get_to_self_delay(&self) -> u16 {
+        self.inner.to_self_delay
+    }
+
+    #[getter]
+    fn get_max_accepted_htlcs(&self) -> u16 {
+        self.inner.max_accepted_htlcs
+    }
+
+    #[getter]
+    fn get_funding_pubkey(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.funding_pubkey,
+        }
+    }
+
+    #[getter]
+    fn get_revocation_basepoint(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.revocation_basepoint,
+        }
+    }
+
+    #[getter]
+    fn get_payment_point(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.payment_point,
+        }
+    }
+
+    #[getter]
+    fn get_delayed_payment_basepoint(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.delayed_payment_basepoint,
+        }
+    }
+
+    #[getter]
+    fn get_htlc_basepoint(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.htlc_basepoint,
+        }
+    }
+
+    #[getter]
+    fn get_first_per_commitment_point(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.first_per_commitment_point,
+        }
+    }
+
+    #[getter]
+    fn get_shutdown_scriptpubkey(&self) -> Option<PyScript> {
+        match &self.inner.shutdown_scriptpubkey {
+            OptionalField::Present(x) => Some(PyScript { inner: x.clone() }),
+            OptionalField::Absent => None,
+        }
+    }
 }
 
 #[pyclass(name=FundingCreated)]
@@ -132,6 +344,30 @@ impl PyFundingCreated {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_temporary_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.temporary_channel_id).into()
+    }
+
+    #[getter]
+    fn get_funding_txid(&self) -> PyTxId {
+        PyTxId {
+            inner: self.inner.funding_txid,
+        }
+    }
+
+    #[getter]
+    fn get_funding_output_index(&self) -> u16 {
+        self.inner.funding_output_index
+    }
+
+    #[getter]
+    fn get_signature(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.signature,
+        }
     }
 }
 
@@ -154,6 +390,18 @@ impl PyFundingSigned {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_signature(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.signature,
+        }
+    }
 }
 
 #[pyclass(name=FundingLocked)]
@@ -174,6 +422,18 @@ impl PyFundingLocked {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_next_per_commitment_point(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.next_per_commitment_point,
+        }
     }
 }
 
@@ -196,6 +456,18 @@ impl PyShutdown {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_scriptpubkey(&self) -> PyScript {
+        PyScript {
+            inner: self.inner.scriptpubkey.clone(),
+        }
+    }
 }
 
 #[pyclass(name=ClosingSigned)]
@@ -216,6 +488,23 @@ impl PyClosingSigned {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_fee_satoshis(&self) -> u64 {
+        self.inner.fee_satoshis
+    }
+
+    #[getter]
+    fn get_signature(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.signature,
+        }
     }
 }
 
@@ -238,6 +527,33 @@ impl PyUpdateAddHTLC {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_htlc_id(&self) -> u64 {
+        self.inner.htlc_id
+    }
+
+    #[getter]
+    fn get_ammount_msat(&self) -> u64 {
+        self.inner.amount_msat
+    }
+
+    #[getter]
+    fn get_payment_hash(&self) -> PyPaymentHash {
+        PyPaymentHash {
+            inner: self.inner.payment_hash,
+        }
+    }
+
+    #[getter]
+    fn get_cltv_expiry(&self) -> u32 {
+        self.inner.cltv_expiry
+    }
 }
 
 #[pyclass(name=UpdateFulfillHTLC)]
@@ -258,6 +574,23 @@ impl PyUpdateFulfillHTLC {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_htlc_id(&self) -> u64 {
+        self.inner.htlc_id
+    }
+
+    #[getter]
+    fn get_payment_preimage(&self) -> PyPaymentPreimage {
+        PyPaymentPreimage {
+            inner: self.inner.payment_preimage,
+        }
     }
 }
 
@@ -280,6 +613,16 @@ impl PyUpdateFailHTLC {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_htlc_id(&self) -> u64 {
+        self.inner.htlc_id
+    }
 }
 
 #[pyclass(name=UpdateFailMalformedHTLC)]
@@ -300,6 +643,21 @@ impl PyUpdateFailMalformedHTLC {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_htlc_id(&self) -> u64 {
+        self.inner.htlc_id
+    }
+
+    #[getter]
+    fn get_failure_code(&self) -> u16 {
+        self.inner.failure_code
     }
 }
 
@@ -322,6 +680,27 @@ impl PyCommitmentSigned {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_signature(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.signature,
+        }
+    }
+
+    #[getter]
+    fn get_htlc_signatures(&self) -> Vec<PySignature> {
+        let mut foreign_htlc_sigs: Vec<PySignature> = vec![];
+        for sig in self.inner.htlc_signatures.iter() {
+            foreign_htlc_sigs.push(PySignature { inner: *sig })
+        }
+        foreign_htlc_sigs
+    }
 }
 
 #[pyclass(name=RevokeAndACK)]
@@ -343,6 +722,23 @@ impl PyRevokeAndACK {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_per_commitment_secret(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.per_commitment_secret).into()
+    }
+
+    #[getter]
+    fn get_next_per_commitment_point(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.next_per_commitment_point,
+        }
+    }
 }
 
 #[pyclass(name=UpdateFee)]
@@ -363,6 +759,16 @@ impl PyUpdateFee {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_feerate_per_kw(&self) -> u32 {
+        self.inner.feerate_per_kw
     }
 }
 
@@ -386,6 +792,18 @@ impl PyDataLossProtect {
             },
         }
     }
+
+    #[getter]
+    fn get_your_last_per_commitment_secret(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.your_last_per_commitment_secret).into()
+    }
+
+    #[getter]
+    fn get_my_current_per_commitment_point(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.my_current_per_commitment_point,
+        }
+    }
 }
 
 #[pyclass(name=ChannelReestablish)]
@@ -407,6 +825,29 @@ impl PyChannelReestablish {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_next_local_commitment_number(&self) -> u64 {
+        self.inner.next_local_commitment_number
+    }
+
+    #[getter]
+    fn get_next_remote_commitment_number(&self) -> u64 {
+        self.inner.next_remote_commitment_number
+    }
+
+    #[getter]
+    fn get_data_loss_protect(&self) -> Option<PyDataLossProtect> {
+        match &self.inner.data_loss_protect {
+            OptionalField::Present(x) => Some(PyDataLossProtect { inner: x.clone() }),
+            OptionalField::Absent => None,
+        }
+    }
 }
 
 #[pyclass(name=AnnouncementSignatures)]
@@ -427,6 +868,30 @@ impl PyAnnouncementSignatures {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.channel_id).into()
+    }
+
+    #[getter]
+    fn get_short_channel_id(&self) -> u64 {
+        self.inner.short_channel_id
+    }
+
+    #[getter]
+    fn get_node_signature(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.node_signature,
+        }
+    }
+
+    #[getter]
+    fn get_bitcoin_signature(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.bitcoin_signature,
+        }
     }
 }
 
@@ -471,6 +936,7 @@ impl PyNetAddress {
         }
     }
 
+    // FIXME: Check if from_bytes makes sense
     // #[staticmethod]
     // fn from_bytes(mut data: &[u8]) -> PyResult<Self> {
     //     match NetAddress::read(&mut data) {
@@ -520,10 +986,64 @@ impl PyNetAddress {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for PyNetAddress {
-    fn __str__(&self) -> String {
-        format!("{:?}", self.inner)
+#[pyclass(name=UnsignedNodeAnnouncement)]
+#[derive(Clone)]
+pub struct PyUnsignedNodeAnnouncement {
+    pub inner: UnsignedNodeAnnouncement,
+}
+
+#[pymethods]
+impl PyUnsignedNodeAnnouncement {
+    #[staticmethod]
+    fn from_bytes(mut data: &[u8]) -> PyResult<Self> {
+        match UnsignedNodeAnnouncement::read(&mut data) {
+            Ok(x) => Ok(PyUnsignedNodeAnnouncement { inner: x }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
+        }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_features(&self) -> PyNodeFeatures {
+        PyNodeFeatures {
+            inner: self.inner.features.clone(),
+        }
+    }
+
+    #[getter]
+    fn get_timestamp(&self) -> u32 {
+        self.inner.timestamp
+    }
+
+    #[getter]
+    fn get_node_id(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.node_id,
+        }
+    }
+
+    #[getter]
+    fn get_rgb(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.rgb).into()
+    }
+
+    #[getter]
+    fn get_alias(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.alias).into()
+    }
+
+    #[getter]
+    fn get_addresses(&self) -> Vec<PyNetAddress> {
+        let mut foreign_addresses: Vec<PyNetAddress> = vec![];
+        for address in self.inner.addresses.iter() {
+            foreign_addresses.push(PyNetAddress {
+                inner: address.clone(),
+            })
+        }
+        foreign_addresses
     }
 }
 
@@ -546,6 +1066,88 @@ impl PyNodeAnnouncement {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_signature(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.signature,
+        }
+    }
+
+    #[getter]
+    fn get_contents(&self) -> PyUnsignedNodeAnnouncement {
+        PyUnsignedNodeAnnouncement {
+            inner: self.inner.contents.clone(),
+        }
+    }
+}
+
+#[pyclass(name=UnsignedChannelAnnouncement)]
+#[derive(Clone)]
+pub struct PyUnsignedChannelAnnouncement {
+    pub inner: UnsignedChannelAnnouncement,
+}
+
+#[pymethods]
+impl PyUnsignedChannelAnnouncement {
+    #[staticmethod]
+    fn from_bytes(mut data: &[u8]) -> PyResult<Self> {
+        match UnsignedChannelAnnouncement::read(&mut data) {
+            Ok(x) => Ok(PyUnsignedChannelAnnouncement { inner: x }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
+        }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_features(&self) -> PyChannelFeatures {
+        PyChannelFeatures {
+            inner: self.inner.features.clone(),
+        }
+    }
+
+    #[getter]
+    fn get_chain_hash(&self) -> PyBlockHash {
+        PyBlockHash {
+            inner: self.inner.chain_hash,
+        }
+    }
+
+    #[getter]
+    fn get_short_channel_id(&self) -> u64 {
+        self.inner.short_channel_id
+    }
+
+    #[getter]
+    fn get_node_id_1(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.node_id_1,
+        }
+    }
+
+    #[getter]
+    fn get_node_id_2(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.node_id_2,
+        }
+    }
+
+    #[getter]
+    fn get_bitcoin_key_1(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.bitcoin_key_1,
+        }
+    }
+
+    #[getter]
+    fn get_bitcoin_key_2(&self) -> PyPublicKey {
+        PyPublicKey {
+            inner: self.inner.bitcoin_key_2,
+        }
+    }
 }
 
 #[pyclass(name=ChannelAnnouncement)]
@@ -567,6 +1169,112 @@ impl PyChannelAnnouncement {
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
     }
+
+    #[getter]
+    fn get_node_signature_1(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.node_signature_1,
+        }
+    }
+
+    #[getter]
+    fn get_node_signature_2(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.node_signature_2,
+        }
+    }
+
+    #[getter]
+    fn get_bitcoin_signature_1(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.bitcoin_signature_1,
+        }
+    }
+
+    #[getter]
+    fn get_bitcoin_signature_2(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.bitcoin_signature_2,
+        }
+    }
+
+    #[getter]
+    fn get_contents(&self) -> PyUnsignedChannelAnnouncement {
+        PyUnsignedChannelAnnouncement {
+            inner: self.inner.contents.clone(),
+        }
+    }
+}
+
+#[pyclass(name=UnsignedChannelUpdate)]
+#[derive(Clone)]
+pub struct PyUnsignedChannelUpdate {
+    pub inner: UnsignedChannelUpdate,
+}
+
+#[pymethods]
+impl PyUnsignedChannelUpdate {
+    #[staticmethod]
+    fn from_bytes(mut data: &[u8]) -> PyResult<Self> {
+        match UnsignedChannelUpdate::read(&mut data) {
+            Ok(x) => Ok(PyUnsignedChannelUpdate { inner: x }),
+            Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
+        }
+    }
+
+    fn serialize(&self, py: Python) -> Py<PyBytes> {
+        PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_chain_hash(&self) -> PyBlockHash {
+        PyBlockHash {
+            inner: self.inner.chain_hash,
+        }
+    }
+
+    #[getter]
+    fn get_short_channel_id(&self) -> u64 {
+        self.inner.short_channel_id
+    }
+
+    #[getter]
+    fn get_timestamp(&self) -> u32 {
+        self.inner.timestamp
+    }
+
+    #[getter]
+    fn get_flags(&self) -> u8 {
+        self.inner.flags
+    }
+
+    #[getter]
+    fn get_cltv_expiry_delta(&self) -> u16 {
+        self.inner.cltv_expiry_delta
+    }
+
+    #[getter]
+    fn get_htlc_minimum_msat(&self) -> u64 {
+        self.inner.htlc_minimum_msat
+    }
+
+    #[getter]
+    fn get_htlc_maximum_msat(&self) -> Option<u64> {
+        match self.inner.htlc_maximum_msat {
+            OptionalField::Present(x) => Some(x),
+            OptionalField::Absent => None,
+        }
+    }
+
+    #[getter]
+    fn get_fee_base_msat(&self) -> u32 {
+        self.inner.fee_base_msat
+    }
+
+    #[getter]
+    fn get_fee_proportional_millionths(&self) -> u32 {
+        self.inner.fee_proportional_millionths
+    }
 }
 
 #[pyclass(name=ChannelUpdate)]
@@ -587,6 +1295,20 @@ impl PyChannelUpdate {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+
+    #[getter]
+    fn get_signature(&self) -> PySignature {
+        PySignature {
+            inner: self.inner.signature,
+        }
+    }
+
+    #[getter]
+    fn get_contents(&self) -> PyUnsignedChannelUpdate {
+        PyUnsignedChannelUpdate {
+            inner: self.inner.contents.clone(),
+        }
     }
 }
 
