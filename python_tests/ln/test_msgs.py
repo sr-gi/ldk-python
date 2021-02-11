@@ -336,28 +336,28 @@ def test_update_fail_htlc_getters(update_fail_htlc_bytes):
 
 # UPDATE FAIL MALFORMED HTLC
 @pytest.fixture
-def update_fail_maldormed_htlc_bytes():
+def update_fail_malformed_htlc_bytes():
     return bytes.fromhex(
         "020202020202020202020202020202020202020202020202020202020202020200083a840000034d010101010101010101010101010101010101010101010101010101010101010100ff"
     )
 
 
-def test_update_fail_malformed_htlc_from_bytes(update_fail_maldormed_htlc_bytes):
-    assert isinstance(UpdateFailMalformedHTLC.from_bytes(update_fail_maldormed_htlc_bytes), UpdateFailMalformedHTLC)
+def test_update_fail_malformed_htlc_from_bytes(update_fail_malformed_htlc_bytes):
+    assert isinstance(UpdateFailMalformedHTLC.from_bytes(update_fail_malformed_htlc_bytes), UpdateFailMalformedHTLC)
 
 
-def test_update_fail_malformed_htlc_serialize(update_fail_maldormed_htlc_bytes):
-    update_fail_malformed_htlc = UpdateFailMalformedHTLC.from_bytes(update_fail_maldormed_htlc_bytes)
-    assert update_fail_malformed_htlc.serialize() == update_fail_maldormed_htlc_bytes
+def test_update_fail_malformed_htlc_serialize(update_fail_malformed_htlc_bytes):
+    update_fail_malformed_htlc = UpdateFailMalformedHTLC.from_bytes(update_fail_malformed_htlc_bytes)
+    assert update_fail_malformed_htlc.serialize() == update_fail_malformed_htlc_bytes
 
 
-def test_update_fail_malformed_htlc_getters(update_fail_maldormed_htlc_bytes):
-    update_fail_malformed_htlc_io = BytesIO(update_fail_maldormed_htlc_bytes)
-    update_fail_malformed_htlc = UpdateFailMalformedHTLC.from_bytes(update_fail_maldormed_htlc_bytes)
+def test_update_fail_malformed_htlc_getters(update_fail_malformed_htlc_bytes):
+    update_fail_malformed_htlc_io = BytesIO(update_fail_malformed_htlc_bytes)
+    update_fail_malformed_htlc = UpdateFailMalformedHTLC.from_bytes(update_fail_malformed_htlc_bytes)
 
     assert update_fail_malformed_htlc.channel_id == update_fail_malformed_htlc_io.read(32)
     assert update_fail_malformed_htlc.htlc_id == int.from_bytes(update_fail_malformed_htlc_io.read(8), "big")
-    assert update_fail_malformed_htlc.failure_code == int.from_bytes(update_fail_maldormed_htlc_bytes[-2:], "big")
+    assert update_fail_malformed_htlc.failure_code == int.from_bytes(update_fail_malformed_htlc_bytes[-2:], "big")
 
 
 # COMMITMENT SIGNED
@@ -822,6 +822,72 @@ def test_lightning_error_getters():
 
     assert lightning_error.err == msg
     lightning_error.action.type == error_action.type
+
+
+# COMMITMENT UPDATE
+@pytest.fixture
+def commitment_update_data(
+    update_add_htlc_bytes,
+    update_fulfill_htlc_bytes,
+    update_fail_htlc_bytes,
+    update_fail_malformed_htlc_bytes,
+    update_fee_bytes,
+    commitment_signed_bytes,
+):
+    update_add_htlcs = [UpdateAddHTLC.from_bytes(update_add_htlc_bytes)]
+    update_fulfill_htlcs = [UpdateFulfillHTLC.from_bytes(update_fulfill_htlc_bytes)]
+    update_fail_htlcs = [UpdateFailHTLC.from_bytes(update_fail_htlc_bytes)]
+    update_fail_malformed_htlcs = [UpdateFailMalformedHTLC.from_bytes(update_fail_malformed_htlc_bytes)]
+    update_fee = UpdateFee.from_bytes(update_fee_bytes)
+    commitment_signed = CommitmentSigned.from_bytes(commitment_signed_bytes)
+
+    return {
+        "update_add_htlcs": update_add_htlcs,
+        "update_fulfill_htlcs": update_fulfill_htlcs,
+        "update_fail_htlcs": update_fail_htlcs,
+        "update_fail_malformed_htlcs": update_fail_malformed_htlcs,
+        "update_fee": update_fee,
+        "commitment_signed": commitment_signed,
+    }
+
+
+@pytest.fixture
+def commitment_update(commitment_update_data):
+    return CommitmentUpdate(
+        commitment_update_data.get("update_add_htlcs"),
+        commitment_update_data.get("update_fulfill_htlcs"),
+        commitment_update_data.get("update_fail_htlcs"),
+        commitment_update_data.get("update_fail_malformed_htlcs"),
+        commitment_update_data.get("update_fee"),
+        commitment_update_data.get("commitment_signed"),
+    )
+
+
+def test_commitment_update(commitment_update):
+    assert isinstance(commitment_update, CommitmentUpdate)
+
+
+def test_commitment_update_getters(commitment_update, commitment_update_data):
+    assert (
+        commitment_update.update_add_htlcs[0].serialize()
+        == commitment_update_data.get("update_add_htlcs")[0].serialize()
+    )
+    assert (
+        commitment_update.update_fulfill_htlcs[0].serialize()
+        == commitment_update_data.get("update_fulfill_htlcs")[0].serialize()
+    )
+    assert (
+        commitment_update.update_fail_htlcs[0].serialize()
+        == commitment_update_data.get("update_fail_htlcs")[0].serialize()
+    )
+    assert (
+        commitment_update.update_fail_malformed_htlcs[0].serialize()
+        == commitment_update_data.get("update_fail_malformed_htlcs")[0].serialize()
+    )
+    assert commitment_update.update_fee.serialize() == commitment_update_data.get("update_fee").serialize()
+    assert (
+        commitment_update.commitment_signed.serialize() == commitment_update_data.get("commitment_signed").serialize()
+    )
 
 
 # HTLC FAIL CHANNEL UPDATE

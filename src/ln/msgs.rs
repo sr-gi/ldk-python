@@ -1394,6 +1394,114 @@ impl PyLightningError {
     }
 }
 
+#[pyclass(name=CommitmentUpdate)]
+#[derive(Clone)]
+pub struct PyCommitmentUpdate {
+    pub inner: CommitmentUpdate,
+}
+
+#[pymethods]
+impl PyCommitmentUpdate {
+    #[new]
+    fn new(
+        update_add_htlcs: Vec<PyUpdateAddHTLC>,
+        update_fulfill_htlcs: Vec<PyUpdateFulfillHTLC>,
+        update_fail_htlcs: Vec<PyUpdateFailHTLC>,
+        update_fail_malformed_htlcs: Vec<PyUpdateFailMalformedHTLC>,
+        update_fee: Option<PyUpdateFee>,
+        commitment_signed: PyCommitmentSigned,
+    ) -> Self {
+        let mut native_update_add_htlcs = vec![];
+        for update in update_add_htlcs.into_iter() {
+            native_update_add_htlcs.push(update.inner)
+        }
+        let mut native_update_fulfill_htlcs = vec![];
+        for update in update_fulfill_htlcs.into_iter() {
+            native_update_fulfill_htlcs.push(update.inner)
+        }
+        let mut native_update_fail_htlcs = vec![];
+        for update in update_fail_htlcs.into_iter() {
+            native_update_fail_htlcs.push(update.inner)
+        }
+        let mut native_update_fail_malformed_htlcs = vec![];
+        for update in update_fail_malformed_htlcs.into_iter() {
+            native_update_fail_malformed_htlcs.push(update.inner)
+        }
+        PyCommitmentUpdate {
+            inner: CommitmentUpdate {
+                update_add_htlcs: native_update_add_htlcs,
+                update_fulfill_htlcs: native_update_fulfill_htlcs,
+                update_fail_htlcs: native_update_fail_htlcs,
+                update_fail_malformed_htlcs: native_update_fail_malformed_htlcs,
+                update_fee: match update_fee {
+                    Some(x) => Some(x.inner),
+                    None => None,
+                },
+                commitment_signed: commitment_signed.inner,
+            },
+        }
+    }
+
+    #[getter]
+    fn get_update_add_htlcs(&self) -> Vec<PyUpdateAddHTLC> {
+        let mut foreign_update_add_htlcs = vec![];
+        for update in self.inner.update_add_htlcs.iter() {
+            foreign_update_add_htlcs.push(PyUpdateAddHTLC {
+                inner: update.clone(),
+            })
+        }
+        foreign_update_add_htlcs
+    }
+
+    #[getter]
+    fn get_update_fulfill_htlcs(&self) -> Vec<PyUpdateFulfillHTLC> {
+        let mut foreign_update_fulfill_htlcs = vec![];
+        for update in self.inner.update_fulfill_htlcs.iter() {
+            foreign_update_fulfill_htlcs.push(PyUpdateFulfillHTLC {
+                inner: update.clone(),
+            })
+        }
+        foreign_update_fulfill_htlcs
+    }
+
+    #[getter]
+    fn get_update_fail_htlcs(&self) -> Vec<PyUpdateFailHTLC> {
+        let mut foreign_update_fail_htlcs = vec![];
+        for update in self.inner.update_fail_htlcs.iter() {
+            foreign_update_fail_htlcs.push(PyUpdateFailHTLC {
+                inner: update.clone(),
+            })
+        }
+        foreign_update_fail_htlcs
+    }
+
+    #[getter]
+    fn get_update_fail_malformed_htlcs(&self) -> Vec<PyUpdateFailMalformedHTLC> {
+        let mut foreign_update_fail_malformed_htlcs = vec![];
+        for update in self.inner.update_fail_malformed_htlcs.iter() {
+            foreign_update_fail_malformed_htlcs.push(PyUpdateFailMalformedHTLC {
+                inner: update.clone(),
+            })
+        }
+        foreign_update_fail_malformed_htlcs
+    }
+
+    #[getter]
+    fn get_update_fee(&self) -> Option<PyUpdateFee> {
+        match &self.inner.update_fee {
+            Some(x) => Some(PyUpdateFee { inner: x.clone() }),
+            None => None,
+        }
+    }
+
+    #[getter]
+    fn get_commitment_signed(&self) -> PyCommitmentSigned {
+        PyCommitmentSigned {
+            inner: self.inner.commitment_signed.clone(),
+        }
+    }
+}
+
 #[pyclass(name=HTLCFailChannelUpdate)]
 #[derive(Clone)]
 pub struct PyHTLCFailChannelUpdate {
