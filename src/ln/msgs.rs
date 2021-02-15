@@ -1357,6 +1357,24 @@ impl PyErrorAction {
     fn get_type(&self) -> String {
         self.error_type.clone()
     }
+
+    // Each msg type is different, so we need to return a  Py<PyAny> here.
+    #[getter]
+    fn get_msg(&self, py: Python) -> PyResult<Py<PyAny>> {
+        match &self.inner {
+            ErrorAction::DisconnectPeer { msg: m } => match m {
+                Some(x) => Ok(PyErrorMessage { inner: x.clone() }.into_py(py)),
+                None => Ok(().into_py(py)),
+            },
+            ErrorAction::SendErrorMessage { msg: m } => {
+                Ok(PyErrorMessage { inner: m.clone() }.into_py(py))
+            }
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have msg",
+                self.error_type,
+            ))),
+        }
+    }
 }
 
 #[pyclass(name=LightningError)]
@@ -1547,6 +1565,60 @@ impl PyHTLCFailChannelUpdate {
     #[getter]
     fn get_type(&self) -> String {
         self.update_type.clone()
+    }
+
+    #[getter]
+    fn get_msg(&self) -> PyResult<PyChannelUpdate> {
+        match &self.inner {
+            HTLCFailChannelUpdate::ChannelUpdateMessage { msg: m } => {
+                Ok(PyChannelUpdate { inner: m.clone() })
+            }
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have msg",
+                self.update_type,
+            ))),
+        }
+    }
+
+    #[getter]
+    fn get_short_channel_id(&self) -> PyResult<u64> {
+        match self.inner {
+            HTLCFailChannelUpdate::ChannelClosed {
+                short_channel_id: i,
+                ..
+            } => Ok(i),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have short_channel_id",
+                self.update_type,
+            ))),
+        }
+    }
+
+    #[getter]
+    fn get_is_permanent(&self) -> PyResult<bool> {
+        match self.inner {
+            HTLCFailChannelUpdate::ChannelClosed {
+                is_permanent: p, ..
+            }
+            | HTLCFailChannelUpdate::NodeFailure {
+                is_permanent: p, ..
+            } => Ok(p),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have is_permanent",
+                self.update_type,
+            ))),
+        }
+    }
+
+    #[getter]
+    fn get_node_id(&self) -> PyResult<PyPublicKey> {
+        match self.inner {
+            HTLCFailChannelUpdate::NodeFailure { node_id: i, .. } => Ok(PyPublicKey { inner: i }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have node_id",
+                self.update_type,
+            ))),
+        }
     }
 }
 
@@ -2141,6 +2213,7 @@ impl PyRoutingMessageHandler {
         }
     }
 
+    // TODO: This should return PyResult<LightningError>, but LightningError cannot be properly created atm
     fn handle_node_announcement(&self, msg: PyNodeAnnouncement) -> PyResult<Py<PyAny>> {
         Python::with_gil(|py| {
             let py_rout_msg_handler = self.inner.as_ref(py);
@@ -2151,6 +2224,7 @@ impl PyRoutingMessageHandler {
         })
     }
 
+    // TODO: This should return PyResult<LightningError>, but LightningError cannot be properly created atm
     fn handle_channel_announcement(&self, msg: PyChannelAnnouncement) -> PyResult<Py<PyAny>> {
         Python::with_gil(|py| {
             let py_rout_msg_handler = self.inner.as_ref(py);
@@ -2160,6 +2234,7 @@ impl PyRoutingMessageHandler {
         })
     }
 
+    // TODO: This should return PyResult<LightningError>, but LightningError cannot be properly created atm
     fn handle_channel_update(&self, msg: PyChannelUpdate) -> PyResult<Py<PyAny>> {
         Python::with_gil(|py| {
             let py_rout_msg_handler = self.inner.as_ref(py);

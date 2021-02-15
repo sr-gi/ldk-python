@@ -28,4 +28,7 @@ ChannelUpdate = msgs.ChannelUpdate
 UnsignedChannelUpdate = msgs.UnsignedChannelUpdate
 ErrorAction = msgs.ErrorAction
 LightningError = msgs.LightningError
+CommitmentUpdate = msgs.CommitmentUpdate
 HTLCFailChannelUpdate = msgs.HTLCFailChannelUpdate
+ChannelMessageHandler = msgs.ChannelMessageHandler
+RoutingMessageHandler = msgs.RoutingMessageHandler

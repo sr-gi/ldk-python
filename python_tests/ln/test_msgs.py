@@ -3,7 +3,9 @@ import pytest
 from conftest import get_random_net_addr, get_random_bytes, get_random_pk_bytes, get_random_int
 
 from ldk_python.primitives import PublicKey, BlockHash
+from ldk_python.util.events import MessageSendEvent
 from ldk_python.ln.msgs import *
+from ldk_python.ln.features import InitFeatures
 
 # INIT
 @pytest.fixture
@@ -791,20 +793,30 @@ def test_error_action_disconnect_peer(error_message_bytes):
     error_message = ErrorMessage.from_bytes(error_message_bytes)
     error_action = ErrorAction.disconnect_peer(error_message)
     assert isinstance(error_action, ErrorAction)
+
+    # Getters
     assert error_action.type == "DisconnectPeer"
+    assert error_action.msg.serialize() == error_message.serialize()
 
 
 def test_error_action_ignore_error():
     error_action = ErrorAction.ignore_error()
     assert isinstance(error_action, ErrorAction)
+
+    # Getters
     assert error_action.type == "IgnoreError"
+    with pytest.raises(AttributeError, match="does not have msg"):
+        error_action.msg
 
 
 def test_error_action_send_error_message(error_message_bytes):
     error_message = ErrorMessage.from_bytes(error_message_bytes)
     error_action = ErrorAction.send_error_message(error_message)
     assert isinstance(error_action, ErrorAction)
+
+    # Getters
     assert error_action.type == "SendErrorMessage"
+    assert error_action.msg.serialize() == error_message.serialize()
 
 
 # LIGHTNING ERROR
@@ -895,15 +907,35 @@ def test_htlc_fail_channel_update_channel_update_message(channel_update_bytes):
     chan_update = ChannelUpdate.from_bytes(channel_update_bytes)
     htlc_fail_chan_update = HTLCFailChannelUpdate.channel_update_message(chan_update)
     assert isinstance(htlc_fail_chan_update, HTLCFailChannelUpdate)
+
+    # Getters
     assert htlc_fail_chan_update.type == "ChannelUpdateMessage"
+    assert htlc_fail_chan_update.msg.serialize() == channel_update_bytes
+
+    with pytest.raises(AttributeError, match="does not have short_channel_id"):
+        htlc_fail_chan_update.short_channel_id
+    with pytest.raises(AttributeError, match="does not have is_permanent"):
+        htlc_fail_chan_update.is_permanent
+    with pytest.raises(AttributeError, match="does not have node_id"):
+        htlc_fail_chan_update.node_id
 
 
 def test_htlc_fail_channel_update_channel_closed():
-    shot_chan_id = get_random_int(8)
+    short_chan_id = get_random_int(8)
     is_permanent = True
-    htlc_fail_chan_update = HTLCFailChannelUpdate.channel_closed(shot_chan_id, is_permanent)
+    htlc_fail_chan_update = HTLCFailChannelUpdate.channel_closed(short_chan_id, is_permanent)
     assert isinstance(htlc_fail_chan_update, HTLCFailChannelUpdate)
+
+    # Getters
     assert htlc_fail_chan_update.type == "ChannelClosed"
+    assert htlc_fail_chan_update.short_channel_id == short_chan_id
+    assert htlc_fail_chan_update.is_permanent == is_permanent
+
+    with pytest.raises(AttributeError, match="does not have msg"):
+        htlc_fail_chan_update.msg
+
+    with pytest.raises(AttributeError, match="does not have node_id"):
+        htlc_fail_chan_update.node_id
 
 
 def test_htlc_fail_channel_update_node_failure():
@@ -911,4 +943,330 @@ def test_htlc_fail_channel_update_node_failure():
     is_permanent = False
     htlc_fail_chan_update = HTLCFailChannelUpdate.node_failure(node_id, is_permanent)
     assert isinstance(htlc_fail_chan_update, HTLCFailChannelUpdate)
+
+    # Getters
     assert htlc_fail_chan_update.type == "NodeFailure"
+    assert htlc_fail_chan_update.node_id.serialize() == node_id.serialize()
+    assert htlc_fail_chan_update.is_permanent == is_permanent
+
+    with pytest.raises(AttributeError, match="does not have msg"):
+        htlc_fail_chan_update.msg
+
+    with pytest.raises(AttributeError, match="does not have short_channel_id"):
+        htlc_fail_chan_update.short_channel_id
+
+
+# CHANNEL MESSAGE HANDLER
+class CMH:
+    def __init__(self, events=[]):
+        self.events = events
+
+    def get_and_clear_pending_msg_events(self):
+        events = self.events
+        self.events = []
+        return events
+
+    def handle_open_channel(self, their_node_id, their_features, msg):
+        pass
+
+    def handle_accept_channel(self, their_node_id, their_features, msg):
+        pass
+
+    def handle_funding_created(self, their_node_id, msg):
+        pass
+
+    def handle_funding_signed(self, their_node_id, msg):
+        pass
+
+    def handle_funding_locked(self, their_node_id, msg):
+        pass
+
+    def handle_shutdown(self, their_node_id, msg):
+        pass
+
+    def handle_closing_signed(self, their_node_id, msg):
+        pass
+
+    def handle_update_add_htlc(self, their_node_id, msg):
+        pass
+
+    def handle_update_fulfill_htlc(self, their_node_id, msg):
+        pass
+
+    def handle_update_fail_htlc(self, their_node_id, msg):
+        pass
+
+    def handle_update_fail_malformed_htlc(self, their_node_id, msg):
+        pass
+
+    def handle_commitment_signed(self, their_node_id, msg):
+        pass
+
+    def handle_revoke_and_ack(self, their_node_id, msg):
+        pass
+
+    def handle_update_fee(self, their_node_id, msg):
+        pass
+
+    def handle_announcement_signatures(self, their_node_id, msg):
+        pass
+
+    def peer_disconnected(self, their_node_id, no_connection_possible):
+        pass
+
+    def peer_connected(self, their_node_id, msg):
+        pass
+
+    def handle_channel_reestablish(self, their_node_id, msg):
+        pass
+
+    def handle_error(self, their_node_id, msg):
+        pass
+
+
+@pytest.fixture
+def channel_message_handler():
+    return ChannelMessageHandler(CMH())
+
+
+def test_channel_manage_handler(channel_message_handler):
+    assert isinstance(channel_message_handler, ChannelMessageHandler)
+
+
+def test_get_and_clear_pending_msg_events(accept_channel_bytes, open_channel_bytes):
+    node1_id = PublicKey(get_random_pk_bytes())
+    msg1 = AcceptChannel.from_bytes(accept_channel_bytes)
+    event1 = MessageSendEvent.send_accept_channel(node1_id, msg1)
+
+    node2_id = PublicKey(get_random_pk_bytes())
+    msg2 = OpenChannel.from_bytes(open_channel_bytes)
+    event2 = MessageSendEvent.send_open_channel(node2_id, msg2)
+
+    events = [event1, event2]
+    cmh = CMH(events)
+    channel_message_handler = ChannelMessageHandler(cmh)
+
+    for e1, e2 in zip(channel_message_handler.get_and_clear_pending_msg_events(), events):
+        assert e1.msg.serialize() == e2.msg.serialize()
+
+
+def test_handle_open_channel(channel_message_handler, open_channel_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    their_features = InitFeatures.known()
+    msg = OpenChannel.from_bytes(open_channel_bytes)
+
+    channel_message_handler.handle_open_channel(their_node_id, their_features, msg)
+
+
+def test_handle_accept_channel(channel_message_handler, accept_channel_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    their_features = InitFeatures.known()
+    msg = AcceptChannel.from_bytes(accept_channel_bytes)
+
+    channel_message_handler.handle_accept_channel(their_node_id, their_features, msg)
+
+
+def test_handle_funding_created(channel_message_handler, funding_created_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = FundingCreated.from_bytes(funding_created_bytes)
+
+    channel_message_handler.handle_funding_created(their_node_id, msg)
+
+
+def test_handle_funding_signed(channel_message_handler, funding_signed_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = FundingSigned.from_bytes(funding_signed_bytes)
+
+    channel_message_handler.handle_funding_signed(their_node_id, msg)
+
+
+def test_handle_funding_locked(channel_message_handler, funding_locked_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = FundingLocked.from_bytes(funding_locked_bytes)
+
+    channel_message_handler.handle_funding_locked(their_node_id, msg)
+
+
+def test_handle_shutdoewn(channel_message_handler, shutdown_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = Shutdown.from_bytes(shutdown_bytes)
+
+    channel_message_handler.handle_shutdown(their_node_id, msg)
+
+
+def test_handle_closing_signed(channel_message_handler, closing_signed_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = ClosingSigned.from_bytes(closing_signed_bytes)
+
+    channel_message_handler.handle_closing_signed(their_node_id, msg)
+
+
+def test_handle_update_add_htlc(channel_message_handler, update_add_htlc_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = UpdateAddHTLC.from_bytes(update_add_htlc_bytes)
+
+    channel_message_handler.handle_update_add_htlc(their_node_id, msg)
+
+
+def test_handle_update_fulfill_htlc(channel_message_handler, update_fulfill_htlc_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = UpdateFulfillHTLC.from_bytes(update_fulfill_htlc_bytes)
+
+    channel_message_handler.handle_update_fulfill_htlc(their_node_id, msg)
+
+
+def test_handle_update_fail_htlc(channel_message_handler, update_fail_htlc_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = UpdateFailHTLC.from_bytes(update_fail_htlc_bytes)
+
+    channel_message_handler.handle_update_fail_htlc(their_node_id, msg)
+
+
+def test_handle_update_fail_malformed_htlc(channel_message_handler, update_fail_malformed_htlc_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = UpdateFailMalformedHTLC.from_bytes(update_fail_malformed_htlc_bytes)
+
+    channel_message_handler.handle_update_fail_malformed_htlc(their_node_id, msg)
+
+
+def test_handle_commitment_signed(channel_message_handler, commitment_signed_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = CommitmentSigned.from_bytes(commitment_signed_bytes)
+
+    channel_message_handler.handle_commitment_signed(their_node_id, msg)
+
+
+def test_handle_revoke_and_ack(channel_message_handler, revoke_and_ack_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = RevokeAndACK.from_bytes(revoke_and_ack_bytes)
+
+    channel_message_handler.handle_revoke_and_ack(their_node_id, msg)
+
+
+def test_handle_update_fee(channel_message_handler, update_fee_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = UpdateFee.from_bytes(update_fee_bytes)
+
+    channel_message_handler.handle_update_fee(their_node_id, msg)
+
+
+def test_handle_announcement_signatures(channel_message_handler, announcement_signatures_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = AnnouncementSignatures.from_bytes(announcement_signatures_bytes)
+
+    channel_message_handler.handle_announcement_signatures(their_node_id, msg)
+
+
+def test_peer_disconnected(channel_message_handler):
+    their_node_id = PublicKey(get_random_pk_bytes())
+
+    channel_message_handler.peer_disconnected(their_node_id, True)
+
+
+def test_peer_connected(channel_message_handler, init_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = Init.from_bytes(init_bytes)
+
+    channel_message_handler.peer_connected(their_node_id, msg)
+
+
+def test_handle_channel_reestablish(channel_message_handler, channel_reestablish_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = ChannelReestablish.from_bytes(channel_reestablish_bytes)
+
+    channel_message_handler.handle_channel_reestablish(their_node_id, msg)
+
+
+def test_handle_error(channel_message_handler, error_message_bytes):
+    their_node_id = PublicKey(get_random_pk_bytes())
+    msg = ErrorMessage.from_bytes(error_message_bytes)
+
+    channel_message_handler.handle_error(their_node_id, msg)
+
+
+# ROUTING MESSAGE HANDLER
+class RMH:
+    def __init__(self, chann_update=True):
+        self.chann_update = chann_update
+
+    def handle_node_announcement(self, msg):
+        return True
+
+    def handle_channel_announcement(self, msg):
+        return False
+
+    def handle_channel_update(self, msg):
+        return self.chann_update
+
+    def handle_htlc_fail_channel_update(self, updates):
+        pass
+
+    def get_next_channel_announcements(self, starting_point, batch_amount):
+        return []
+
+    def get_next_node_announcements(self, starting_point, batch_amount):
+        return []
+
+    def should_request_full_sync(self, node_id):
+        return True
+
+
+@pytest.fixture
+def routing_message_handler():
+    return RoutingMessageHandler(RMH())
+
+
+def test_channel_manage_handler(routing_message_handler):
+    assert isinstance(routing_message_handler, RoutingMessageHandler)
+
+
+def test_handle_node_announcement(routing_message_handler, node_announcement_bytes):
+    msg = NodeAnnouncement.from_bytes(node_announcement_bytes)
+    assert routing_message_handler.handle_node_announcement(msg) == True
+
+
+def test_handle_channel_announcement(routing_message_handler, channel_announcement_bytes):
+    msg = ChannelAnnouncement.from_bytes(channel_announcement_bytes)
+    assert routing_message_handler.handle_channel_announcement(msg) == False
+
+
+def test_handle_channel_update(routing_message_handler, channel_update_bytes):
+    msg = ChannelUpdate.from_bytes(channel_update_bytes)
+    assert routing_message_handler.handle_channel_update(msg) == True
+
+    error_msg = "Error"
+    error_action = ErrorAction.ignore_error()
+    lightning_error = LightningError(error_msg, error_action)
+
+    another_routing_message_handler = RoutingMessageHandler(RMH(lightning_error))
+    result = another_routing_message_handler.handle_channel_update(msg)
+    assert result.err == lightning_error.err
+    assert result.action.type == lightning_error.action.type
+
+
+def test_handle_htlc_fail_channel_update(routing_message_handler, channel_update_bytes):
+    chan_update = ChannelUpdate.from_bytes(channel_update_bytes)
+    htlc_fail_chan_update = HTLCFailChannelUpdate.channel_update_message(chan_update)
+
+    # Check it does not fail
+    assert routing_message_handler.handle_htlc_fail_channel_update(htlc_fail_chan_update) == None
+
+
+def test_get_next_channel_announcements(routing_message_handler):
+    starting_point = get_random_int(8)
+    batch_amount = get_random_int(1)
+
+    assert routing_message_handler.get_next_channel_announcements(starting_point, batch_amount) == []
+
+
+def test_get_next_node_announcements(routing_message_handler):
+    starting_point = PublicKey(get_random_pk_bytes())
+    batch_amount = get_random_int(1)
+
+    assert routing_message_handler.get_next_node_announcements(starting_point, batch_amount) == []
+
+
+def test_should_request_full_sync(routing_message_handler):
+    node_id = PublicKey(get_random_pk_bytes())
+
+    assert routing_message_handler.should_request_full_sync(node_id) == True
