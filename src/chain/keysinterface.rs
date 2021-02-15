@@ -252,7 +252,7 @@ impl PyInMemoryChannelKeys {
     }
 
     #[getter]
-    fn commitment_seed(&self, py: Python) -> PyObject {
+    fn commitment_seed(&self, py: Python) -> Py<PyAny> {
         PyBytes::new(py, &serialize(&self.inner.commitment_seed)).into()
     }
 
