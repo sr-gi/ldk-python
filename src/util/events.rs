@@ -7,7 +7,8 @@ use lightning::util::events::{Event, MessageSendEvent, MessageSendEventsProvider
 
 use crate::chain::keysinterface::{match_spendable_output_descriptor, PySpendableOutputDescriptor};
 use crate::ln::channelmanager::{PyPaymentHash, PyPaymentPreimage, PyPaymentSecret};
-use crate::primitives::{PyOutPoint, PyScript};
+use crate::ln::msgs::*;
+use crate::primitives::{PyOutPoint, PyPublicKey, PyScript};
 use crate::{has_trait_bound, process_python_return};
 
 pub fn match_event_type(e: &Event) -> String {
@@ -19,6 +20,35 @@ pub fn match_event_type(e: &Event) -> String {
         Event::PaymentFailed { .. } => String::from("PaymentFailed"),
         Event::PendingHTLCsForwardable { .. } => String::from("PendingHTLCsForwardable"),
         Event::SpendableOutputs { .. } => String::from("SpendableOutputs"),
+    }
+}
+
+pub fn match_message_send_event_type(e: &MessageSendEvent) -> String {
+    match e {
+        MessageSendEvent::SendAcceptChannel { .. } => String::from("SendAcceptChannel"),
+        MessageSendEvent::SendOpenChannel { .. } => String::from("SendOpenChannel"),
+        MessageSendEvent::SendFundingCreated { .. } => String::from("SendFundingCreated"),
+        MessageSendEvent::SendFundingSigned { .. } => String::from("SendFundingSigned"),
+        MessageSendEvent::SendFundingLocked { .. } => String::from("SendFundingLocked"),
+        MessageSendEvent::SendAnnouncementSignatures { .. } => {
+            String::from("SendAnnouncementSignatures")
+        }
+        MessageSendEvent::UpdateHTLCs { .. } => String::from("UpdateHTLCs"),
+        MessageSendEvent::SendRevokeAndACK { .. } => String::from("SendRevokeAndACK"),
+        MessageSendEvent::SendClosingSigned { .. } => String::from("SendClosingSigned"),
+        MessageSendEvent::SendShutdown { .. } => String::from("SendShutdown"),
+        MessageSendEvent::SendChannelReestablish { .. } => String::from("SendChannelReestablish"),
+        MessageSendEvent::BroadcastChannelAnnouncement { .. } => {
+            String::from("BroadcastChannelAnnouncement")
+        }
+        MessageSendEvent::BroadcastNodeAnnouncement { .. } => {
+            String::from("BroadcastNodeAnnouncement")
+        }
+        MessageSendEvent::BroadcastChannelUpdate { .. } => String::from("BroadcastChannelUpdate"),
+        MessageSendEvent::HandleError { .. } => String::from("HandleError"),
+        MessageSendEvent::PaymentFailureNetworkUpdate { .. } => {
+            String::from("PaymentFailureNetworkUpdate")
+        }
     }
 }
 
@@ -321,11 +351,344 @@ impl PyEvent {
     }
 }
 
-// TODO: CHECK IF THIS NEEDS FURTHER BINDING
 #[pyclass(name=MessageSendEvent)]
 #[derive(Clone)]
 pub struct PyMessageSendEvent {
     pub inner: MessageSendEvent,
+    pub event_type: String,
+}
+
+#[pymethods]
+impl PyMessageSendEvent {
+    #[staticmethod]
+    fn send_accept_channel(node_id: PyPublicKey, msg: PyAcceptChannel) -> Self {
+        let event = MessageSendEvent::SendAcceptChannel {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_open_channel(node_id: PyPublicKey, msg: PyOpenChannel) -> Self {
+        let event = MessageSendEvent::SendOpenChannel {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_funding_created(node_id: PyPublicKey, msg: PyFundingCreated) -> Self {
+        let event = MessageSendEvent::SendFundingCreated {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_funding_signed(node_id: PyPublicKey, msg: PyFundingSigned) -> Self {
+        let event = MessageSendEvent::SendFundingSigned {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_funding_locked(node_id: PyPublicKey, msg: PyFundingLocked) -> Self {
+        let event = MessageSendEvent::SendFundingLocked {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_announcement_signatures(node_id: PyPublicKey, msg: PyAnnouncementSignatures) -> Self {
+        let event = MessageSendEvent::SendAnnouncementSignatures {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn update_htlcs(node_id: PyPublicKey, updates: PyCommitmentUpdate) -> Self {
+        let event = MessageSendEvent::UpdateHTLCs {
+            node_id: node_id.inner,
+            updates: updates.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_revoke_and_ack(node_id: PyPublicKey, msg: PyRevokeAndACK) -> Self {
+        let event = MessageSendEvent::SendRevokeAndACK {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_closing_signed(node_id: PyPublicKey, msg: PyClosingSigned) -> Self {
+        let event = MessageSendEvent::SendClosingSigned {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_shutdown(node_id: PyPublicKey, msg: PyShutdown) -> Self {
+        let event = MessageSendEvent::SendShutdown {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn send_channel_reestablish(node_id: PyPublicKey, msg: PyChannelReestablish) -> Self {
+        let event = MessageSendEvent::SendChannelReestablish {
+            node_id: node_id.inner,
+            msg: msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn broadcast_channel_announcement(
+        msg: PyChannelAnnouncement,
+        update_msg: PyChannelUpdate,
+    ) -> Self {
+        let event = MessageSendEvent::BroadcastChannelAnnouncement {
+            msg: msg.inner,
+            update_msg: update_msg.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn broadcast_node_announcement(msg: PyNodeAnnouncement) -> Self {
+        let event = MessageSendEvent::BroadcastNodeAnnouncement { msg: msg.inner };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn broadcast_channel_update(msg: PyChannelUpdate) -> Self {
+        let event = MessageSendEvent::BroadcastChannelUpdate { msg: msg.inner };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn handle_error(node_id: PyPublicKey, action: PyErrorAction) -> Self {
+        let event = MessageSendEvent::HandleError {
+            node_id: node_id.inner,
+            action: action.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[staticmethod]
+    fn payment_failure_network_update(update: PyHTLCFailChannelUpdate) -> Self {
+        let event = MessageSendEvent::PaymentFailureNetworkUpdate {
+            update: update.inner,
+        };
+        PyMessageSendEvent {
+            event_type: match_message_send_event_type(&event),
+            inner: event,
+        }
+    }
+
+    #[getter]
+    fn get_type(&self) -> String {
+        self.event_type.clone()
+    }
+
+    #[getter]
+    fn get_node_id(&self) -> PyResult<PyPublicKey> {
+        match self.inner {
+            MessageSendEvent::SendAcceptChannel { node_id: i, .. }
+            | MessageSendEvent::SendOpenChannel { node_id: i, .. }
+            | MessageSendEvent::SendFundingCreated { node_id: i, .. }
+            | MessageSendEvent::SendFundingSigned { node_id: i, .. }
+            | MessageSendEvent::SendFundingLocked { node_id: i, .. }
+            | MessageSendEvent::SendAnnouncementSignatures { node_id: i, .. }
+            | MessageSendEvent::UpdateHTLCs { node_id: i, .. }
+            | MessageSendEvent::SendRevokeAndACK { node_id: i, .. }
+            | MessageSendEvent::SendClosingSigned { node_id: i, .. }
+            | MessageSendEvent::SendShutdown { node_id: i, .. }
+            | MessageSendEvent::SendChannelReestablish { node_id: i, .. }
+            | MessageSendEvent::HandleError { node_id: i, .. } => Ok(PyPublicKey { inner: i }),
+            MessageSendEvent::BroadcastChannelAnnouncement { .. }
+            | MessageSendEvent::BroadcastNodeAnnouncement { .. }
+            | MessageSendEvent::BroadcastChannelUpdate { .. }
+            | MessageSendEvent::PaymentFailureNetworkUpdate { .. } => {
+                Err(exceptions::PyAttributeError::new_err(format!(
+                    "{} does not have node_id",
+                    self.event_type,
+                )))
+            }
+        }
+    }
+
+    // Each msg type is different, so we need to return a  Py<PyAny> here.
+    #[getter]
+    fn get_msg(&self, py: Python) -> PyResult<Py<PyAny>> {
+        match &self.inner {
+            MessageSendEvent::SendAcceptChannel { msg: m, .. } => {
+                Ok(PyAcceptChannel { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendOpenChannel { msg: m, .. } => {
+                Ok(PyOpenChannel { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendFundingCreated { msg: m, .. } => {
+                Ok(PyFundingCreated { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendFundingSigned { msg: m, .. } => {
+                Ok(PyFundingSigned { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendFundingLocked { msg: m, .. } => {
+                Ok(PyFundingLocked { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendAnnouncementSignatures { msg: m, .. } => {
+                Ok(PyAnnouncementSignatures { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendRevokeAndACK { msg: m, .. } => {
+                Ok(PyRevokeAndACK { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendClosingSigned { msg: m, .. } => {
+                Ok(PyClosingSigned { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendShutdown { msg: m, .. } => {
+                Ok(PyShutdown { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::SendChannelReestablish { msg: m, .. } => {
+                Ok(PyChannelReestablish { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::BroadcastChannelAnnouncement { msg: m, .. } => {
+                Ok(PyChannelAnnouncement { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::BroadcastNodeAnnouncement { msg: m, .. } => {
+                Ok(PyNodeAnnouncement { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::BroadcastChannelUpdate { msg: m, .. } => {
+                Ok(PyChannelUpdate { inner: m.clone() }.into_py(py))
+            }
+            MessageSendEvent::UpdateHTLCs { .. }
+            | MessageSendEvent::HandleError { .. }
+            | MessageSendEvent::PaymentFailureNetworkUpdate { .. } => {
+                Err(exceptions::PyAttributeError::new_err(format!(
+                    "{} does not have msg",
+                    self.event_type,
+                )))
+            }
+        }
+    }
+
+    #[getter]
+    fn get_updates(&self) -> PyResult<PyCommitmentUpdate> {
+        match &self.inner {
+            MessageSendEvent::UpdateHTLCs { updates: u, .. } => {
+                Ok(PyCommitmentUpdate { inner: u.clone() })
+            }
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have updates",
+                self.event_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn get_update_msg(&self) -> PyResult<PyChannelUpdate> {
+        match &self.inner {
+            MessageSendEvent::BroadcastChannelAnnouncement { update_msg: u, .. } => {
+                Ok(PyChannelUpdate { inner: u.clone() })
+            }
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have update_msg",
+                self.event_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn get_action(&self) -> PyResult<PyErrorAction> {
+        match &self.inner {
+            MessageSendEvent::HandleError { action: a, .. } => Ok(PyErrorAction {
+                inner: a.clone(),
+                error_type: match_error_action(a),
+            }),
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have action",
+                self.event_type
+            ))),
+        }
+    }
+
+    #[getter]
+    fn get_update(&self) -> PyResult<PyHTLCFailChannelUpdate> {
+        match &self.inner {
+            MessageSendEvent::PaymentFailureNetworkUpdate { update: u, .. } => {
+                Ok(PyHTLCFailChannelUpdate {
+                    inner: u.clone(),
+                    update_type: match_htlc_fail_chan_update(u),
+                })
+            }
+            _ => Err(exceptions::PyAttributeError::new_err(format!(
+                "{} does not have update",
+                self.event_type
+            ))),
+        }
+    }
 }
 
 #[pyclass(name=MessageSendEventsProvider)]

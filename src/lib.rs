@@ -207,6 +207,7 @@ fn msgs(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ln::msgs::PyChannelUpdate>()?;
     m.add_class::<ln::msgs::PyErrorAction>()?;
     m.add_class::<ln::msgs::PyLightningError>()?;
+    m.add_class::<ln::msgs::PyCommitmentUpdate>()?;
     m.add_class::<ln::msgs::PyHTLCFailChannelUpdate>()?;
     m.add_class::<ln::msgs::PyChannelMessageHandler>()?;
     m.add_class::<ln::msgs::PyRoutingMessageHandler>()?;
@@ -263,6 +264,7 @@ fn errors(py: Python, m: &PyModule) -> PyResult<()> {
 /// Events module for LDK.
 fn events(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<util::events::PyEvent>()?;
+    m.add_class::<util::events::PyMessageSendEvent>()?;
     Ok(())
 }
 
