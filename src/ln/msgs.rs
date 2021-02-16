@@ -936,11 +936,18 @@ impl PyNetAddress {
         }
     }
 
-    // FIXME: Check if from_bytes makes sense
+    // This may come handy in the future, for now it's not necessary since it's unlikely that a user
+    // will deserialize an address.
     // #[staticmethod]
     // fn from_bytes(mut data: &[u8]) -> PyResult<Self> {
-    //     match NetAddress::read(&mut data) {
-    //         Ok(x) => Ok(PyNetAddress { inner: x }),
+    //     match <Result<NetAddress, u8> as Readable>::read(&mut data) {
+    //         Ok(x) => match x {
+    //             Ok(x) => Ok(PyNetAddress { inner: x }),
+    //             Err(e) => Err(exceptions::PyValueError::new_err(format!(
+    //                 "Unknown address prefix: {}",
+    //                 e
+    //             ))),
+    //         },
     //         Err(e) => Err(exceptions::PyValueError::new_err(format!("{}", e))),
     //     }
     // }
