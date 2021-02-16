@@ -163,51 +163,51 @@ impl PyChannelDetails {
     }
 
     #[getter]
-    fn channel_id(&self, py: Python) -> Py<PyBytes> {
+    fn get_channel_id(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.channel_id).into()
     }
 
     #[getter]
-    fn short_channel_id(&self) -> Option<u64> {
+    fn get_short_channel_id(&self) -> Option<u64> {
         self.inner.short_channel_id
     }
 
     #[getter]
-    fn remote_network_id(&self) -> PyPublicKey {
+    fn get_remote_network_id(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.remote_network_id,
         }
     }
 
     #[getter]
-    fn counterparty_features(&self) -> PyInitFeatures {
+    fn get_counterparty_features(&self) -> PyInitFeatures {
         PyInitFeatures {
             inner: self.inner.counterparty_features.clone(),
         }
     }
 
     #[getter]
-    fn channel_value_satoshis(&self) -> u64 {
+    fn get_channel_value_satoshis(&self) -> u64 {
         self.inner.channel_value_satoshis
     }
 
     #[getter]
-    fn user_id(&self) -> u64 {
+    fn get_user_id(&self) -> u64 {
         self.inner.user_id
     }
 
     #[getter]
-    fn outbound_capacity_msat(&self) -> u64 {
+    fn get_outbound_capacity_msat(&self) -> u64 {
         self.inner.outbound_capacity_msat
     }
 
     #[getter]
-    fn inbound_capacity_msat(&self) -> u64 {
+    fn get_inbound_capacity_msat(&self) -> u64 {
         self.inner.inbound_capacity_msat
     }
 
     #[getter]
-    fn is_live(&self) -> bool {
+    fn get_is_live(&self) -> bool {
         self.inner.is_live
     }
 }

@@ -275,7 +275,7 @@ impl PyChannelMonitorUpdate {
     }
 
     #[getter]
-    fn update_id(&self) -> u64 {
+    fn get_update_id(&self) -> u64 {
         self.inner.update_id
     }
 }
@@ -325,7 +325,7 @@ impl PyMonitorEvent {
     }
 
     #[getter]
-    fn htlc_update(&self) -> PyResult<PyHTLCUpdate> {
+    fn get_htlc_update(&self) -> PyResult<PyHTLCUpdate> {
         match &self.inner {
             MonitorEvent::HTLCEvent(h) => Ok(PyHTLCUpdate { inner: h.clone() }),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
@@ -336,7 +336,7 @@ impl PyMonitorEvent {
     }
 
     #[getter]
-    fn outpoint(&self) -> PyResult<PyOutPoint> {
+    fn get_outpoint(&self) -> PyResult<PyOutPoint> {
         match self.inner {
             MonitorEvent::CommitmentTxBroadcasted(o) => Ok(PyOutPoint { inner: o }),
             _ => Err(exceptions::PyAttributeError::new_err(format!(

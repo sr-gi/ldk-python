@@ -93,7 +93,7 @@ impl PySpendableOutputDescriptor {
     // Shared attributes
 
     #[getter]
-    fn outpoint(&self) -> PyOutPoint {
+    fn get_outpoint(&self) -> PyOutPoint {
         match self.inner {
             SpendableOutputDescriptor::StaticOutput { outpoint: o, .. } => PyOutPoint { inner: o },
             SpendableOutputDescriptor::DynamicOutputP2WSH { outpoint: o, .. } => {
@@ -106,7 +106,7 @@ impl PySpendableOutputDescriptor {
     }
 
     #[getter]
-    fn output(&self) -> PyTxOut {
+    fn get_output(&self) -> PyTxOut {
         match &self.inner {
             SpendableOutputDescriptor::StaticOutput { output: o, .. } => {
                 PyTxOut { inner: o.clone() }
@@ -123,7 +123,7 @@ impl PySpendableOutputDescriptor {
     // DynamicOutputP2WSH attributes
 
     #[getter]
-    fn per_commitment_point(&self) -> PyResult<PyPublicKey> {
+    fn get_per_commitment_point(&self) -> PyResult<PyPublicKey> {
         match self.inner {
             SpendableOutputDescriptor::DynamicOutputP2WSH {
                 per_commitment_point: p,
@@ -137,7 +137,7 @@ impl PySpendableOutputDescriptor {
     }
 
     #[getter]
-    fn to_self_delay(&self) -> PyResult<u16> {
+    fn get_to_self_delay(&self) -> PyResult<u16> {
         match self.inner {
             SpendableOutputDescriptor::DynamicOutputP2WSH {
                 to_self_delay: d, ..
@@ -150,7 +150,7 @@ impl PySpendableOutputDescriptor {
     }
 
     #[getter]
-    fn revocation_pubkey(&self) -> PyResult<PyPublicKey> {
+    fn get_revocation_pubkey(&self) -> PyResult<PyPublicKey> {
         match self.inner {
             SpendableOutputDescriptor::DynamicOutputP2WSH {
                 revocation_pubkey: r,
@@ -166,7 +166,7 @@ impl PySpendableOutputDescriptor {
     // Attributes shared amongst DynamicOutputP2WSH and StaticOutputCounterpartyPayment
 
     #[getter]
-    fn key_derivation_params(&self) -> PyResult<(u64, u64)> {
+    fn get_key_derivation_params(&self) -> PyResult<(u64, u64)> {
         match self.inner {
             SpendableOutputDescriptor::DynamicOutputP2WSH {
                 key_derivation_params: p,
@@ -219,40 +219,40 @@ impl PyInMemoryChannelKeys {
     }
 
     #[getter]
-    fn funding_key(&self) -> PySecretKey {
+    fn get_funding_key(&self) -> PySecretKey {
         PySecretKey {
             inner: self.inner.funding_key,
         }
     }
 
     #[getter]
-    fn revocation_base_key(&self) -> PySecretKey {
+    fn get_revocation_base_key(&self) -> PySecretKey {
         PySecretKey {
             inner: self.inner.revocation_base_key,
         }
     }
 
     #[getter]
-    fn payment_key(&self) -> PySecretKey {
+    fn get_payment_key(&self) -> PySecretKey {
         PySecretKey {
             inner: self.inner.payment_key,
         }
     }
     #[getter]
-    fn delayed_payment_base_key(&self) -> PySecretKey {
+    fn get_delayed_payment_base_key(&self) -> PySecretKey {
         PySecretKey {
             inner: self.inner.delayed_payment_base_key,
         }
     }
     #[getter]
-    fn htlc_base_key(&self) -> PySecretKey {
+    fn get_htlc_base_key(&self) -> PySecretKey {
         PySecretKey {
             inner: self.inner.htlc_base_key,
         }
     }
 
     #[getter]
-    fn commitment_seed(&self, py: Python) -> Py<PyAny> {
+    fn get_commitment_seed(&self, py: Python) -> Py<PyAny> {
         PyBytes::new(py, &serialize(&self.inner.commitment_seed)).into()
     }
 

@@ -165,7 +165,7 @@ impl PyEvent {
     // FundingGenerationReady attributes
 
     #[getter]
-    fn temporary_channel_id(&self, py: Python) -> PyResult<Py<PyBytes>> {
+    fn get_temporary_channel_id(&self, py: Python) -> PyResult<Py<PyBytes>> {
         match self.inner {
             Event::FundingGenerationReady {
                 temporary_channel_id: t,
@@ -179,7 +179,7 @@ impl PyEvent {
     }
 
     #[getter]
-    fn channel_value_satoshis(&self) -> PyResult<u64> {
+    fn get_channel_value_satoshis(&self) -> PyResult<u64> {
         match self.inner {
             Event::FundingGenerationReady {
                 channel_value_satoshis: v,
@@ -193,7 +193,7 @@ impl PyEvent {
     }
 
     #[getter]
-    fn output_script(&self) -> PyResult<PyScript> {
+    fn get_output_script(&self) -> PyResult<PyScript> {
         match &self.inner {
             Event::FundingGenerationReady {
                 output_script: s, ..
@@ -207,7 +207,7 @@ impl PyEvent {
 
     // Attributes shared amongst FundingGenerationReady and FundingBroadcastSafe
     #[getter]
-    fn user_channel_id(&self) -> PyResult<u64> {
+    fn get_user_channel_id(&self) -> PyResult<u64> {
         match self.inner {
             Event::FundingGenerationReady {
                 user_channel_id: c, ..
@@ -225,7 +225,7 @@ impl PyEvent {
     // FundingBroadcastSafe attributes
 
     #[getter]
-    fn funding_txo(&self) -> PyResult<PyOutPoint> {
+    fn get_funding_txo(&self) -> PyResult<PyOutPoint> {
         match self.inner {
             Event::FundingBroadcastSafe { funding_txo: o, .. } => Ok(PyOutPoint { inner: o }),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
@@ -240,7 +240,7 @@ impl PyEvent {
     // Shared amognst PaymentReceived and PaymentFailed
 
     #[getter]
-    fn payment_hash(&self) -> PyResult<PyPaymentHash> {
+    fn get_payment_hash(&self) -> PyResult<PyPaymentHash> {
         match self.inner {
             Event::PaymentReceived {
                 payment_hash: h, ..
@@ -256,7 +256,7 @@ impl PyEvent {
     }
 
     #[getter]
-    fn payment_secret(&self) -> PyResult<Option<PyPaymentSecret>> {
+    fn get_payment_secret(&self) -> PyResult<Option<PyPaymentSecret>> {
         match self.inner {
             Event::PaymentReceived {
                 payment_secret: s, ..
@@ -272,7 +272,7 @@ impl PyEvent {
     }
 
     #[getter]
-    fn amt(&self) -> PyResult<u64> {
+    fn get_amt(&self) -> PyResult<u64> {
         match self.inner {
             Event::PaymentReceived { amt: a, .. } => Ok(a),
             _ => Err(exceptions::PyAttributeError::new_err(format!(
@@ -285,7 +285,7 @@ impl PyEvent {
     // PaymentSent attributes
 
     #[getter]
-    fn payment_preimage(&self) -> PyResult<PyPaymentPreimage> {
+    fn get_payment_preimage(&self) -> PyResult<PyPaymentPreimage> {
         match self.inner {
             Event::PaymentSent {
                 payment_preimage: p,
@@ -300,7 +300,7 @@ impl PyEvent {
     // PaymentFailed attributes
 
     #[getter]
-    fn rejected_by_dest(&self) -> PyResult<bool> {
+    fn get_rejected_by_dest(&self) -> PyResult<bool> {
         match self.inner {
             Event::PaymentFailed {
                 rejected_by_dest: r,
@@ -316,7 +316,7 @@ impl PyEvent {
     // PendingHTLCsForwardable attributes
 
     #[getter]
-    fn time_forwardable(&self) -> PyResult<(u64, u32)> {
+    fn get_time_forwardable(&self) -> PyResult<(u64, u32)> {
         match self.inner {
             Event::PendingHTLCsForwardable {
                 time_forwardable: t,
@@ -331,7 +331,7 @@ impl PyEvent {
     // SpendableOutputs attributes
 
     #[getter]
-    fn outputs(&self) -> PyResult<Vec<PySpendableOutputDescriptor>> {
+    fn get_outputs(&self) -> PyResult<Vec<PySpendableOutputDescriptor>> {
         match &self.inner {
             Event::SpendableOutputs { outputs: o } => {
                 let mut py_outputs: Vec<PySpendableOutputDescriptor> = vec![];

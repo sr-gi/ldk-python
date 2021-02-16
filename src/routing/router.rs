@@ -35,38 +35,38 @@ impl PyRouteHop {
     }
 
     #[getter]
-    fn pubkey(&self) -> PyPublicKey {
+    fn get_pubkey(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.pubkey,
         }
     }
 
     #[getter]
-    fn node_features(&self) -> PyNodeFeatures {
+    fn get_node_features(&self) -> PyNodeFeatures {
         PyNodeFeatures {
             inner: self.inner.node_features.clone(),
         }
     }
 
     #[getter]
-    fn short_channel_id(&self) -> u64 {
+    fn get_short_channel_id(&self) -> u64 {
         self.inner.short_channel_id
     }
 
     #[getter]
-    fn channel_features(&self) -> PyChannelFeatures {
+    fn get_channel_features(&self) -> PyChannelFeatures {
         PyChannelFeatures {
             inner: self.inner.channel_features.clone(),
         }
     }
 
     #[getter]
-    fn fee_msat(&self) -> u64 {
+    fn get_fee_msat(&self) -> u64 {
         self.inner.fee_msat
     }
 
     #[getter]
-    fn cltv_expiry_delta(&self) -> u32 {
+    fn get_cltv_expiry_delta(&self) -> u32 {
         self.inner.cltv_expiry_delta
     }
 }
@@ -97,7 +97,7 @@ impl PyRoute {
     }
 
     #[getter]
-    fn paths(&self) -> Vec<Vec<PyRouteHop>> {
+    fn get_paths(&self) -> Vec<Vec<PyRouteHop>> {
         let mut routes = vec![];
 
         for path in self.inner.paths.iter() {

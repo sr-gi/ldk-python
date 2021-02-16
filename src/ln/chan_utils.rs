@@ -35,35 +35,35 @@ impl PyChannelPublicKeys {
     }
 
     #[getter]
-    fn funding_pubkey(&self) -> PyPublicKey {
+    fn get_funding_pubkey(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.funding_pubkey,
         }
     }
 
     #[getter]
-    fn revocation_basepoint(&self) -> PyPublicKey {
+    fn get_revocation_basepoint(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.revocation_basepoint,
         }
     }
 
     #[getter]
-    fn payment_point(&self) -> PyPublicKey {
+    fn get_payment_point(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.payment_point,
         }
     }
 
     #[getter]
-    fn delayed_payment_basepoint(&self) -> PyPublicKey {
+    fn get_delayed_payment_basepoint(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.delayed_payment_basepoint,
         }
     }
 
     #[getter]
-    fn htlc_basepoint(&self) -> PyPublicKey {
+    fn get_htlc_basepoint(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.htlc_basepoint,
         }
@@ -98,35 +98,35 @@ impl PyTxCreationKeys {
     }
 
     #[getter]
-    fn per_commitment_point(&self) -> PyPublicKey {
+    fn get_per_commitment_point(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.per_commitment_point,
         }
     }
 
     #[getter]
-    fn revocation_key(&self) -> PyPublicKey {
+    fn get_revocation_key(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.revocation_key,
         }
     }
 
     #[getter]
-    fn broadcaster_htlc_key(&self) -> PyPublicKey {
+    fn get_broadcaster_htlc_key(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.broadcaster_htlc_key,
         }
     }
 
     #[getter]
-    fn countersignatory_htlc_key(&self) -> PyPublicKey {
+    fn get_countersignatory_htlc_key(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.countersignatory_htlc_key,
         }
     }
 
     #[getter]
-    fn broadcaster_delayed_payment_key(&self) -> PyPublicKey {
+    fn get_broadcaster_delayed_payment_key(&self) -> PyPublicKey {
         PyPublicKey {
             inner: self.inner.broadcaster_delayed_payment_key,
         }
@@ -161,29 +161,29 @@ impl PyHTLCOutputInCommitment {
     }
 
     #[getter]
-    fn offered(&self) -> bool {
+    fn get_offered(&self) -> bool {
         self.inner.offered
     }
 
     #[getter]
-    fn amount_msat(&self) -> u64 {
+    fn get_amount_msat(&self) -> u64 {
         self.inner.amount_msat
     }
 
     #[getter]
-    fn cltv_expiry(&self) -> u32 {
+    fn get_cltv_expiry(&self) -> u32 {
         self.inner.cltv_expiry
     }
 
     #[getter]
-    fn payment_hash(&self) -> PyPaymentHash {
+    fn get_payment_hash(&self) -> PyPaymentHash {
         PyPaymentHash {
             inner: self.inner.payment_hash,
         }
     }
 
     #[getter]
-    fn transaction_output_index(&self) -> Option<u32> {
+    fn get_transaction_output_index(&self) -> Option<u32> {
         self.inner.transaction_output_index
     }
 }
@@ -228,26 +228,26 @@ impl PyHolderCommitmentTransaction {
     }
 
     #[getter]
-    fn unsigned_tx(&self) -> PyTransaction {
+    fn get_unsigned_tx(&self) -> PyTransaction {
         PyTransaction {
             inner: self.inner.unsigned_tx.clone(),
         }
     }
 
     #[getter]
-    fn counterparty_sig(&self) -> PySignature {
+    fn get_counterparty_sig(&self) -> PySignature {
         PySignature {
             inner: self.inner.counterparty_sig,
         }
     }
 
     #[getter]
-    fn feerate_per_kw(&self) -> u32 {
+    fn get_feerate_per_kw(&self) -> u32 {
         self.inner.feerate_per_kw
     }
 
     #[getter]
-    fn per_htlc(&self) -> Vec<(PyHTLCOutputInCommitment, Option<PySignature>)> {
+    fn get_per_htlc(&self) -> Vec<(PyHTLCOutputInCommitment, Option<PySignature>)> {
         let mut py_per_htlc = vec![];
         for htlc_data in self.inner.per_htlc.iter() {
             py_per_htlc.push((

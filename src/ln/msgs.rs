@@ -957,7 +957,7 @@ impl PyNetAddress {
     }
 
     #[getter]
-    fn addr(&self) -> &[u8] {
+    fn get_addr(&self) -> &[u8] {
         match &self.inner {
             NetAddress::IPv4 { addr, .. } => &addr[..],
             NetAddress::IPv6 { addr, .. } => &addr[..],
@@ -967,7 +967,7 @@ impl PyNetAddress {
     }
 
     #[getter]
-    fn port(&self) -> u16 {
+    fn get_port(&self) -> u16 {
         match self.inner {
             NetAddress::IPv4 { port, .. } => port,
             NetAddress::IPv6 { port, .. } => port,
@@ -977,7 +977,7 @@ impl PyNetAddress {
     }
 
     #[getter]
-    fn checksum(&self) -> Option<u16> {
+    fn get_checksum(&self) -> Option<u16> {
         match self.inner {
             NetAddress::OnionV3 { checksum, .. } => Some(checksum),
             _ => None,
@@ -985,7 +985,7 @@ impl PyNetAddress {
     }
 
     #[getter]
-    fn version(&self) -> Option<u8> {
+    fn get_version(&self) -> Option<u8> {
         match self.inner {
             NetAddress::OnionV3 { version, .. } => Some(version),
             _ => None,
@@ -1406,12 +1406,12 @@ impl PyLightningError {
     }
 
     #[getter]
-    fn err(&self) -> String {
+    fn get_err(&self) -> String {
         self.inner.err.clone()
     }
 
     #[getter]
-    fn action(&self) -> PyErrorAction {
+    fn get_action(&self) -> PyErrorAction {
         PyErrorAction {
             inner: self.inner.action.clone(),
             error_type: match_error_action(&self.inner.action),

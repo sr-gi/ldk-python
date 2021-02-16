@@ -183,32 +183,32 @@ impl PyBlockHeader {
     }
 
     #[getter]
-    fn version(&self) -> i32 {
+    fn get_version(&self) -> i32 {
         self.inner.version
     }
 
     #[getter]
-    fn prev_blockhash(&self) -> String {
+    fn get_prev_blockhash(&self) -> String {
         self.inner.prev_blockhash.to_string()
     }
 
     #[getter]
-    fn merkle_root(&self) -> String {
+    fn get_merkle_root(&self) -> String {
         self.inner.merkle_root.to_string()
     }
 
     #[getter]
-    fn time(&self) -> u32 {
+    fn get_time(&self) -> u32 {
         self.inner.time
     }
 
     #[getter]
-    fn bits(&self) -> u32 {
+    fn get_bits(&self) -> u32 {
         self.inner.bits
     }
 
     #[getter]
-    fn nonce(&self) -> u32 {
+    fn get_nonce(&self) -> u32 {
         self.inner.nonce
     }
 
@@ -345,12 +345,12 @@ impl PyOutPoint {
     }
 
     #[getter]
-    fn txid(&self, py: Python) -> Py<PyBytes> {
+    fn get_txid(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &serialize(&self.inner.txid)).into()
     }
 
     #[getter]
-    fn index(&self) -> u16 {
+    fn get_index(&self) -> u16 {
         self.inner.index
     }
 
@@ -405,7 +405,7 @@ impl PyTxIn {
     }
 
     #[getter]
-    fn previous_output(&self) -> PyOutPoint {
+    fn get_previous_output(&self) -> PyOutPoint {
         PyOutPoint {
             inner: OutPoint {
                 txid: self.inner.previous_output.txid,
@@ -415,19 +415,19 @@ impl PyTxIn {
     }
 
     #[getter]
-    fn script_sig(&self) -> PyScript {
+    fn get_script_sig(&self) -> PyScript {
         PyScript {
             inner: self.inner.script_sig.clone(),
         }
     }
 
     #[getter]
-    fn sequence(&self) -> u32 {
+    fn get_sequence(&self) -> u32 {
         self.inner.sequence
     }
 
     #[getter]
-    fn witness(&self, py: Python) -> Vec<Py<PyBytes>> {
+    fn get_witness(&self, py: Python) -> Vec<Py<PyBytes>> {
         let mut w = vec![];
         for witness in self.inner.witness.iter() {
             w.push(PyBytes::new(py, &witness).into())
@@ -475,12 +475,12 @@ impl PyTxOut {
     }
 
     #[getter]
-    fn value(&self) -> u64 {
+    fn get_value(&self) -> u64 {
         self.inner.value
     }
 
     #[getter]
-    fn script_pubkey(&self) -> PyScript {
+    fn get_script_pubkey(&self) -> PyScript {
         PyScript {
             inner: self.inner.script_pubkey.clone(),
         }
@@ -540,17 +540,17 @@ impl PyTransaction {
     }
 
     #[getter]
-    fn version(&self) -> i32 {
+    fn get_version(&self) -> i32 {
         self.inner.version
     }
 
     #[getter]
-    fn lock_time(&self) -> u32 {
+    fn get_lock_time(&self) -> u32 {
         self.inner.lock_time
     }
 
     #[getter]
-    fn input(&self) -> Vec<PyTxIn> {
+    fn get_input(&self) -> Vec<PyTxIn> {
         let mut ins = vec![];
         for i in self.inner.input.iter() {
             ins.push(PyTxIn { inner: i.clone() })
@@ -559,7 +559,7 @@ impl PyTransaction {
     }
 
     #[getter]
-    fn output(&self) -> Vec<PyTxOut> {
+    fn get_output(&self) -> Vec<PyTxOut> {
         let mut outs = vec![];
         for o in self.inner.output.iter() {
             outs.push(PyTxOut { inner: o.clone() })
