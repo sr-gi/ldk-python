@@ -214,6 +214,14 @@ fn msgs(_: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+#[pymodule]
+/// Peer Handler module for LDK.
+fn peer_handler(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<ln::peer_handler::PySocketDescriptor>()?;
+    m.add_class::<ln::peer_handler::PyPeerManager>()?;
+    Ok(())
+}
+
 // Routing
 
 #[pymodule]
@@ -282,6 +290,7 @@ fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(channelmanager))?;
     m.add_wrapped(wrap_pymodule!(features))?;
     m.add_wrapped(wrap_pymodule!(msgs))?;
+    m.add_wrapped(wrap_pymodule!(peer_handler))?;
     m.add_wrapped(wrap_pymodule!(router))?;
     m.add_wrapped(wrap_pymodule!(config))?;
     m.add_wrapped(wrap_pymodule!(errors))?;
