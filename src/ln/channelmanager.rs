@@ -30,10 +30,10 @@ create_exception!(
     PaymentSendFailure,
     pyo3::exceptions::PyException
 );
-create_exception!(errors, ParameterError, PaymentSendFailure);
-create_exception!(errors, PathParameterError, PaymentSendFailure);
-create_exception!(errors, AllFailedRetrySafe, PaymentSendFailure);
-create_exception!(errors, PartialFailure, PaymentSendFailure);
+create_exception!(channelmanager, ParameterError, PaymentSendFailure);
+create_exception!(channelmanager, PathParameterError, PaymentSendFailure);
+create_exception!(channelmanager, AllFailedRetrySafe, PaymentSendFailure);
+create_exception!(channelmanager, PartialFailure, PaymentSendFailure);
 
 pub fn match_payment_error(e: CM::PaymentSendFailure) -> PyErr {
     match e {
