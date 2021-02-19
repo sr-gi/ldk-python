@@ -71,7 +71,11 @@ pub fn logger(_: Python, m: &PyModule) -> PyResult<()> {
 
 #[pymodule]
 /// Chain module for LDK
-fn chain(_: Python, m: &PyModule) -> PyResult<()> {
+fn chain(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add("AccessError", py.get_type::<chain::AccessError>())?;
+    m.add("UnknownChain", py.get_type::<chain::UnknownChain>())?;
+    m.add("UnknownTx", py.get_type::<chain::UnknownTx>())?;
+    m.add_class::<chain::PyAccess>()?;
     m.add_class::<chain::PyWatch>()?;
     m.add_class::<chain::PyFilter>()?;
     Ok(())

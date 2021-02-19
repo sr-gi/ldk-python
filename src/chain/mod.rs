@@ -1,3 +1,4 @@
+use pyo3::create_exception;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 
@@ -7,22 +8,31 @@ use crate::chain::channelmonitor::{
 };
 
 use crate::has_trait_bound;
-use crate::primitives::{PyOutPoint, PyScript, PyTxId};
+use crate::primitives::{PyBlockHash, PyOutPoint, PyScript, PyTxId, PyTxOut};
 use crate::process_python_return;
 
 use bitcoin::blockdata::script::Script;
-use bitcoin::hash_types::Txid;
+use bitcoin::blockdata::transaction::TxOut;
+use bitcoin::hash_types::{BlockHash, Txid};
+use lightning::chain;
 use lightning::chain::channelmonitor::{
     ChannelMonitor, ChannelMonitorUpdate, ChannelMonitorUpdateErr, MonitorEvent,
 };
 use lightning::chain::keysinterface::InMemoryChannelKeys;
 use lightning::chain::transaction::OutPoint;
-use lightning::chain::{Filter, Watch};
+use lightning::chain::{Access, Filter, Watch};
 
 pub mod chaininterface;
 pub mod chainmonitor;
 pub mod channelmonitor;
 pub mod keysinterface;
+
+pub fn match_access_error(e: chain::AccessError) -> PyErr {
+    match e {
+        chain::AccessError::UnknownChain => UnknownChain::new_err(""),
+        chain::AccessError::UnknownTx => UnknownTx::new_err(""),
+    }
+}
 
 pub fn process_python_monitor_return(result: PyResult<()>) -> Result<(), ChannelMonitorUpdateErr> {
     Python::with_gil(|py| match result {
@@ -37,6 +47,65 @@ pub fn process_python_monitor_return(result: PyResult<()>) -> Result<(), Channel
             }
         }
     })
+}
+
+create_exception!(chain, AccessError, pyo3::exceptions::PyException);
+create_exception!(chain, UnknownChain, AccessError);
+create_exception!(chain, UnknownTx, AccessError);
+
+#[pyclass(name=Access)]
+#[derive(Clone)]
+pub struct PyAccess {
+    inner: Py<PyAny>,
+}
+
+#[pymethods]
+impl PyAccess {
+    #[new]
+    fn new(access: Py<PyAny>) -> PyResult<Self> {
+        if has_trait_bound(&access, vec!["get_utxo"]) {
+            Ok(PyAccess { inner: access })
+        } else {
+            Err(exceptions::PyTypeError::new_err(format!(
+                "Not all required methods are implemented by Access"
+            )))
+        }
+    }
+
+    fn get_utxo(&self, genesis_hash: PyBlockHash, short_channel_id: u64) -> PyResult<PyTxOut> {
+        Python::with_gil(|py| {
+            let py_access = self.inner.as_ref(py);
+            process_python_return(
+                py_access.call_method1("get_utxo", (genesis_hash, short_channel_id)),
+            )
+        })
+    }
+}
+
+impl Access for PyAccess {
+    fn get_utxo(
+        &self,
+        genesis_hash: &BlockHash,
+        short_channel_id: u64,
+    ) -> Result<TxOut, chain::AccessError> {
+        match self.get_utxo(
+            PyBlockHash {
+                inner: *genesis_hash,
+            },
+            short_channel_id,
+        ) {
+            Ok(x) => Ok(x.inner),
+            Err(e) => Python::with_gil(|py| {
+                if e.is_instance::<UnknownChain>(py) {
+                    Err(chain::AccessError::UnknownChain)
+                } else if e.is_instance::<UnknownTx>(py) {
+                    Err(chain::AccessError::UnknownTx)
+                } else {
+                    panic! {"Unknown AccessError"}
+                }
+            }),
+        }
+    }
 }
 
 #[pyclass(name=Watch)]

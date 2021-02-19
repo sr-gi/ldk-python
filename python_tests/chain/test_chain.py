@@ -10,8 +10,9 @@ from python_tests.chain.test_channelmonitor import (
     channel_monitor_update_data,
 )
 
-from ldk_python.chain import Watch, Filter
-from ldk_python.primitives import OutPoint, TxId, Script
+from ldk_python.ln.channelmanager import PaymentSendFailure
+from ldk_python.chain import *
+from ldk_python.primitives import OutPoint, TxId, Script, BlockHash, TxOut
 from ldk_python.chain.channelmonitor import (
     ChannelMonitorUpdate,
     TemporaryChannelMonitorUpdateErr,
@@ -19,9 +20,61 @@ from ldk_python.chain.channelmonitor import (
 )
 
 
+# ACCESS ERROR EXCEPTIONS
+def test_access_error():
+    assert isinstance(AccessError(), AccessError)
+    assert isinstance(AccessError(), Exception)
+
+
+def test_unknown_chain():
+    assert isinstance(UnknownChain(), UnknownChain)
+    assert isinstance(UnknownChain(), AccessError)
+
+
+def test_unknown_tx():
+    assert isinstance(UnknownTx(), UnknownTx)
+    assert isinstance(UnknownTx(), AccessError)
+
+
+# ACCESS
+# FIXME: This kind of classes may be easier to implement and understand with
+# a mock library
+class A:
+    def get_utxo(self, genesis_hash, short_channel_id):
+        if genesis_hash.serialize() == bytes(32):
+            raise UnknownChain()
+        if short_channel_id % 2:
+            raise UnknownTx()
+
+        value = pow(2, 64) - 15
+        script_pubkey = Script(get_random_bytes(80))
+        return TxOut(value, script_pubkey)
+
+
+def test_access():
+    access = Access(A())
+
+
+def test_acess_wrong_trait():
+    with pytest.raises(TypeError, match="Not all required methods are implemented"):
+        access = Access(Empty())
+
+
+def test_access_get_utxo():
+    access = Access(A())
+    genesis_block = BlockHash(get_random_bytes(32))
+    short_channel_id = 42
+
+    access.get_utxo(genesis_block, short_channel_id)
+
+    # Test exceptions
+    with pytest.raises(UnknownChain):
+        access.get_utxo(BlockHash(bytes(32)), short_channel_id)
+    with pytest.raises(UnknownTx):
+        access.get_utxo(genesis_block, short_channel_id + 1)
+
+
 # WATCH
-
-
 class W:
     def watch_channel(self, funding_txo, monitor):
         print("Watching channel")
