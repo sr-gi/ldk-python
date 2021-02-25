@@ -229,6 +229,19 @@ fn peer_handler(_: Python, m: &PyModule) -> PyResult<()> {
 // Routing
 
 #[pymodule]
+/// Network Graph module for LDK.
+fn network_graph(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<routing::network_graph::PyNetworkGraph>()?;
+    m.add_class::<routing::network_graph::PyNetGraphMsgHandler>()?;
+    m.add_class::<routing::network_graph::PyDirectionalChannelInfo>()?;
+    m.add_class::<routing::network_graph::PyChannelInfo>()?;
+    m.add_class::<routing::network_graph::PyRoutingFees>()?;
+    m.add_class::<routing::network_graph::PyNodeAnnouncementInfo>()?;
+    m.add_class::<routing::network_graph::PyNodeInfo>()?;
+    Ok(())
+}
+
+#[pymodule]
 /// Router module for LDK.
 fn router(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<routing::router::PyRouteHop>()?;
@@ -295,6 +308,7 @@ fn ldk_python(_: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(features))?;
     m.add_wrapped(wrap_pymodule!(msgs))?;
     m.add_wrapped(wrap_pymodule!(peer_handler))?;
+    m.add_wrapped(wrap_pymodule!(network_graph))?;
     m.add_wrapped(wrap_pymodule!(router))?;
     m.add_wrapped(wrap_pymodule!(config))?;
     m.add_wrapped(wrap_pymodule!(errors))?;

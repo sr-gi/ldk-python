@@ -61,7 +61,7 @@ impl PyObjectProtocol for PySecretKey {
 }
 
 #[pyclass(name=PublicKey)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct PyPublicKey {
     pub inner: PublicKey,
 }
