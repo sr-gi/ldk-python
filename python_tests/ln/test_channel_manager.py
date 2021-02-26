@@ -178,7 +178,7 @@ def test_test_channel_details_getters(channel_details_data):
 
     assert channel_details.channel_id == channel_id
     assert channel_details.short_channel_id == short_channel_id
-    assert channel_details.remote_network_id.serialize() == remote_network_id.serialize()
+    assert channel_details.remote_network_id == remote_network_id
     # FIXME: Features cannot be compared atm
     # assert channel_details.counterparty_features == counterparty_features
     assert channel_details.channel_value_satoshis == channel_value_satoshis

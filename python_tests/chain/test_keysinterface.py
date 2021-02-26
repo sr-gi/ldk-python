@@ -57,8 +57,8 @@ def test_static_output_getters():
     txout = TxOut(get_random_int(8), Script(get_random_bytes(30)))
     descriptor = SpendableOutputDescriptor.static_output(outpoint, txout)
 
-    assert descriptor.outpoint.serialize() == outpoint.serialize()
-    assert descriptor.output.serialize() == txout.serialize()
+    assert descriptor.outpoint == outpoint
+    assert descriptor.output == txout
 
     # Check no other getters are available
     local_attributes = ["outpoint", "output"]
@@ -91,12 +91,12 @@ def test_dynamic_output_pwsh_getters():
         outpoint, per_commitment_point, to_self_delay, txout, key_derivation_params, revocation_pubkey
     )
 
-    assert descriptor.outpoint.serialize() == outpoint.serialize()
-    assert descriptor.per_commitment_point.serialize() == per_commitment_point.serialize()
+    assert descriptor.outpoint == outpoint
+    assert descriptor.per_commitment_point == per_commitment_point
     assert descriptor.to_self_delay == to_self_delay
-    assert descriptor.output.serialize() == txout.serialize()
+    assert descriptor.output == txout
     assert descriptor.key_derivation_params == key_derivation_params
-    assert descriptor.revocation_pubkey.serialize() == revocation_pubkey.serialize()
+    assert descriptor.revocation_pubkey == revocation_pubkey
 
     # This one has all atributes, no need to check the ones that are not there
 
@@ -116,8 +116,8 @@ def test_static_output_counterparty_payment_getters():
     key_derivation_params = (get_random_int(8), get_random_int(8))
     descriptor = SpendableOutputDescriptor.static_output_counterparty_payment(outpoint, txout, key_derivation_params)
 
-    assert descriptor.outpoint.serialize() == outpoint.serialize()
-    assert descriptor.output.serialize() == txout.serialize()
+    assert descriptor.outpoint == outpoint
+    assert descriptor.output == txout
     assert descriptor.key_derivation_params == key_derivation_params
 
     # Check no other getters are available
@@ -154,11 +154,11 @@ def test_in_memory_channel_keys_getters():
         key_derivation_params,
     )
 
-    assert in_mem_chan_keys.funding_key.serialize() == funding_key.serialize()
-    assert in_mem_chan_keys.revocation_base_key.serialize() == revocation_base_key.serialize()
-    assert in_mem_chan_keys.payment_key.serialize() == payment_key.serialize()
-    assert in_mem_chan_keys.delayed_payment_base_key.serialize() == delayed_payment_base_key.serialize()
-    assert in_mem_chan_keys.htlc_base_key.serialize() == htlc_base_key.serialize()
+    assert in_mem_chan_keys.funding_key == funding_key
+    assert in_mem_chan_keys.revocation_base_key == revocation_base_key
+    assert in_mem_chan_keys.payment_key == payment_key
+    assert in_mem_chan_keys.delayed_payment_base_key == delayed_payment_base_key
+    assert in_mem_chan_keys.htlc_base_key == htlc_base_key
     assert in_mem_chan_keys.commitment_seed == commitment_seed
 
 

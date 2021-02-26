@@ -40,7 +40,7 @@ def test_route_hop_getters():
 
     rh = RouteHop(pubkey, node_features, short_channel_id, channel_features, fee_msat, cltv_expiry_delta)
 
-    assert rh.pubkey.serialize() == pubkey.serialize()
+    assert rh.pubkey == pubkey
     assert rh.short_channel_id == short_channel_id
     assert rh.fee_msat == fee_msat
     assert rh.cltv_expiry_delta == cltv_expiry_delta
@@ -60,7 +60,7 @@ def test_route_getters():
 
     for local_route, remote_route in zip(hops, Route(hops).paths):
         for remote_hop, local_hop in zip(local_route, remote_route):
-            assert remote_hop.pubkey.serialize() == local_hop.pubkey.serialize()
+            assert remote_hop.pubkey == local_hop.pubkey
             assert remote_hop.short_channel_id == local_hop.short_channel_id
             assert remote_hop.fee_msat == local_hop.fee_msat
             assert remote_hop.cltv_expiry_delta == local_hop.cltv_expiry_delta

@@ -451,7 +451,7 @@ def test_data_loss_protect_getters():
 
     data_loss_protect = DataLossProtect(last_per_commitment_secret, current_per_commitment_point)
     assert data_loss_protect.your_last_per_commitment_secret == last_per_commitment_secret
-    assert data_loss_protect.my_current_per_commitment_point.serialize() == current_per_commitment_point.serialize()
+    assert data_loss_protect.my_current_per_commitment_point == current_per_commitment_point
 
 
 # CHANNEL REESTABLISH
@@ -946,7 +946,7 @@ def test_htlc_fail_channel_update_node_failure():
 
     # Getters
     assert htlc_fail_chan_update.type == "NodeFailure"
-    assert htlc_fail_chan_update.node_id.serialize() == node_id.serialize()
+    assert htlc_fail_chan_update.node_id == node_id
     assert htlc_fail_chan_update.is_permanent == is_permanent
 
     with pytest.raises(AttributeError, match="does not have msg"):

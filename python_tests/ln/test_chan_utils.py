@@ -34,11 +34,11 @@ def test_test_channel_public_keys_getters():
         funding_pk, revocation_basepoint, payment_point, delayed_payment_basepoint, htlc_basepoint
     )
 
-    assert chan_pks.funding_pubkey.serialize() == funding_pk.serialize()
-    assert chan_pks.revocation_basepoint.serialize() == revocation_basepoint.serialize()
-    assert chan_pks.payment_point.serialize() == payment_point.serialize()
-    assert chan_pks.delayed_payment_basepoint.serialize() == delayed_payment_basepoint.serialize()
-    assert chan_pks.htlc_basepoint.serialize() == htlc_basepoint.serialize()
+    assert chan_pks.funding_pubkey == funding_pk
+    assert chan_pks.revocation_basepoint == revocation_basepoint
+    assert chan_pks.payment_point == payment_point
+    assert chan_pks.delayed_payment_basepoint == delayed_payment_basepoint
+    assert chan_pks.htlc_basepoint == htlc_basepoint
 
 
 def test_tx_creation_keys():
@@ -67,11 +67,11 @@ def test_tx_creation_keys_getters():
         broadcaster_delayed_payment_key,
     )
 
-    assert tx_creation_keys.per_commitment_point.serialize() == per_commitment_point.serialize()
-    assert tx_creation_keys.revocation_key.serialize() == revocation_key.serialize()
-    assert tx_creation_keys.broadcaster_htlc_key.serialize() == broadcaster_htlc_key.serialize()
-    assert tx_creation_keys.countersignatory_htlc_key.serialize() == countersignatory_htlc_key.serialize()
-    assert tx_creation_keys.broadcaster_delayed_payment_key.serialize() == broadcaster_delayed_payment_key.serialize()
+    assert tx_creation_keys.per_commitment_point == per_commitment_point
+    assert tx_creation_keys.revocation_key == revocation_key
+    assert tx_creation_keys.broadcaster_htlc_key == broadcaster_htlc_key
+    assert tx_creation_keys.countersignatory_htlc_key == countersignatory_htlc_key
+    assert tx_creation_keys.broadcaster_delayed_payment_key == broadcaster_delayed_payment_key
 
 
 def test_htlc_output_in_commitment():
@@ -98,7 +98,7 @@ def test_htlc_output_in_commitment_getters():
     assert htlc_out.offered == offered
     assert htlc_out.amount_msat == amount_msat
     assert htlc_out.cltv_expiry == cltv_expiry
-    assert htlc_out.payment_hash.serialize() == payment_hash.serialize()
+    assert htlc_out.payment_hash == payment_hash
     assert htlc_out.transaction_output_index == tx_out_index
 
 
@@ -148,8 +148,8 @@ def test_holder_commitment_tx_getters(holder_commitment_tx_data):
         tx, counterparty_sig, holder_pk, counterparty_pk, keys, feerate_kw, htlc_data
     )
 
-    assert tx.serialize() == holder_commitment_tx.unsigned_tx.serialize()
-    assert counterparty_sig.serialize_der() == holder_commitment_tx.counterparty_sig.serialize_der()
+    assert tx == holder_commitment_tx.unsigned_tx
+    assert counterparty_sig == holder_commitment_tx.counterparty_sig
     assert feerate_kw == holder_commitment_tx.feerate_per_kw
     for local_data, remote_data in zip(htlc_data, holder_commitment_tx.per_htlc):
         local_htlc_data = local_data[0]
@@ -160,6 +160,6 @@ def test_holder_commitment_tx_getters(holder_commitment_tx_data):
         assert local_htlc_data.offered == remote_htlc_data.offered
         assert local_htlc_data.amount_msat == remote_htlc_data.amount_msat
         assert local_htlc_data.cltv_expiry == remote_htlc_data.cltv_expiry
-        assert local_htlc_data.payment_hash.serialize() == remote_htlc_data.payment_hash.serialize()
+        assert local_htlc_data.payment_hash == remote_htlc_data.payment_hash
         assert local_htlc_data.transaction_output_index == remote_htlc_data.transaction_output_index
         assert local_sig == remote_sig

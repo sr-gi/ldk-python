@@ -45,7 +45,7 @@ def test_funding_generation_ready_getters():
 
     assert event.temporary_channel_id == temporary_channel_id
     assert event.channel_value_satoshis == channel_value_satoshis
-    assert event.output_script.serialize() == output_script.serialize()
+    assert event.output_script == output_script
     assert event.user_channel_id == user_channel_id
 
     # Check no other getters are available
@@ -65,7 +65,7 @@ def test_funding_broadcasting_safe_getters():
     user_channel_id = get_random_int(8)
     event = Event.funding_broadcasting_safe(outpoint, user_channel_id)
 
-    assert event.funding_txo.serialize() == outpoint.serialize()
+    assert event.funding_txo == outpoint
     assert event.user_channel_id == user_channel_id
 
     # Check no other getters are available
@@ -173,8 +173,8 @@ def test_spendable_outputs_getters():
 
     for local_output, binded_output in zip(event.outputs, [descriptor]):
         assert local_output.type == binded_output.type
-        assert local_output.outpoint.serialize() == binded_output.outpoint.serialize()
-        assert local_output.output.serialize() == binded_output.output.serialize()
+        assert local_output.outpoint == binded_output.outpoint
+        assert local_output.output == binded_output.output
 
 
 # MESSAGE SEND EVENT
@@ -187,7 +187,7 @@ def test_send_accept_channel(accept_channel_bytes):
 
     # Getters
     assert event.type == "SendAcceptChannel"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -209,7 +209,7 @@ def test_send_open_channel(open_channel_bytes):
 
     # Getters
     assert event.type == "SendOpenChannel"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -229,7 +229,7 @@ def test_send_funding_created(funding_created_bytes):
     assert isinstance(event, MessageSendEvent)
 
     # Getters
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -251,7 +251,7 @@ def test_send_funding_signed(funding_signed_bytes):
 
     # Getters
     assert event.type == "SendFundingSigned"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -273,7 +273,7 @@ def test_send_funding_locked(funding_locked_bytes):
 
     # Getters
     assert event.type == "SendFundingLocked"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -295,7 +295,7 @@ def test_send_announcement_signatures(announcement_signatures_bytes):
 
     # Getters
     assert event.type == "SendAnnouncementSignatures"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -324,7 +324,7 @@ def test_update_htlcs(commitment_update_data):
 
     # Getters
     assert event.type == "UpdateHTLCs"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     for u1, u2 in zip(event.updates.update_add_htlcs, updates.update_add_htlcs):
         assert u1.serialize() == u2.serialize()
     for u1, u2 in zip(event.updates.update_fulfill_htlcs, updates.update_fulfill_htlcs):
@@ -353,7 +353,7 @@ def test_send_revoke_and_ack(revoke_and_ack_bytes):
 
     # Getters
     assert event.type == "SendRevokeAndACK"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -375,7 +375,7 @@ def test_send_closing_signed(closing_signed_bytes):
 
     # Getters
     assert event.type == "SendClosingSigned"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -397,7 +397,7 @@ def test_send_shutdown(shutdown_bytes):
 
     # Getters
     assert event.type == "SendShutdown"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -419,7 +419,7 @@ def test_send_channel_reestablish(channel_reestablish_bytes):
 
     # Getters
     assert event.type == "SendChannelReestablish"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.msg.serialize() == msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):
@@ -482,7 +482,7 @@ def test_handle_error(error_message_bytes):
 
     # Getters
     assert event.type == "HandleError"
-    assert event.node_id.serialize() == node_id.serialize()
+    assert event.node_id == node_id
     assert event.action.msg.serialize() == action.msg.serialize()
 
     with pytest.raises(AttributeError, match="does not have updates"):

@@ -1,5 +1,6 @@
 use std::str;
 
+use pyo3::class::basic::CompareOp;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
@@ -57,6 +58,14 @@ impl PySecretKey {
 impl PyObjectProtocol for PySecretKey {
     fn __str__(&self) -> String {
         format!("{:#x}", self.inner)
+    }
+
+    fn __richcmp__(&self, other: PySecretKey, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }
 
@@ -118,6 +127,14 @@ impl PyObjectProtocol for PyPublicKey {
     fn __str__(&self) -> String {
         format!("{:#x}", self.inner)
     }
+
+    fn __richcmp__(&self, other: PyPublicKey, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
 }
 
 #[pyclass(name=Signature)]
@@ -156,6 +173,14 @@ impl PySignature {
 impl PyObjectProtocol for PySignature {
     fn __str__(&self) -> String {
         format!("{}", self.inner)
+    }
+
+    fn __richcmp__(&self, other: PySignature, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }
 
@@ -222,6 +247,14 @@ impl PyObjectProtocol for PyBlockHeader {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner)
     }
+
+    fn __richcmp__(&self, other: PyBlockHeader, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
 }
 
 #[pyclass(name=BlockHash)]
@@ -248,6 +281,14 @@ impl PyBlockHash {
 impl PyObjectProtocol for PyBlockHash {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner)
+    }
+
+    fn __richcmp__(&self, other: PyBlockHash, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }
 
@@ -278,6 +319,14 @@ impl PyObjectProtocol for PyScript {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner)
     }
+
+    fn __richcmp__(&self, other: PyScript, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
 }
 
 #[pyclass(name=TxId)]
@@ -304,6 +353,14 @@ impl PyTxId {
 impl PyObjectProtocol for PyTxId {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner)
+    }
+
+    fn __richcmp__(&self, other: PyTxId, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }
 
@@ -367,6 +424,14 @@ impl PyOutPoint {
 impl PyObjectProtocol for PyOutPoint {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner.into_bitcoin_outpoint())
+    }
+
+    fn __richcmp__(&self, other: PyOutPoint, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }
 
@@ -446,6 +511,14 @@ impl PyObjectProtocol for PyTxIn {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner)
     }
+
+    fn __richcmp__(&self, other: PyTxIn, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
 }
 
 #[pyclass(name=TxOut)]
@@ -495,6 +568,14 @@ impl PyTxOut {
 impl PyObjectProtocol for PyTxOut {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner)
+    }
+
+    fn __richcmp__(&self, other: PyTxOut, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }
 
@@ -603,6 +684,14 @@ impl PyObjectProtocol for PyTransaction {
     fn __str__(&self) -> String {
         serialize_hex(&self.inner)
     }
+
+    fn __richcmp__(&self, other: PyTransaction, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
 }
 
 #[pyclass(name=Network)]
@@ -642,6 +731,14 @@ impl PyObjectProtocol for PyNetwork {
             Network::Bitcoin => "mainnet",
             Network::Testnet => "testnet",
             Network::Regtest => "regtest",
+        }
+    }
+
+    fn __richcmp__(&self, other: PyNetwork, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
         }
     }
 }

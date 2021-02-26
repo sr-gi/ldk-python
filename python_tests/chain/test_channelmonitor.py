@@ -97,7 +97,7 @@ def test_get_funding_txo(channel_monitor, channel_monitor_data):
     funding_txo = channel_monitor.get_funding_txo()
     funding_info = channel_monitor_data.get("funding_info")
     for i in range(len(funding_txo)):
-        assert funding_info[i].serialize() == funding_txo[i].serialize()
+        assert funding_info[i] == funding_txo[i]
 
 
 def test_get_outputs_to_watch(channel_monitor, channel_monitor_data):
@@ -109,9 +109,9 @@ def test_get_outputs_to_watch(channel_monitor, channel_monitor_data):
     for txid, outs in outputs.items():
         assert len(outs) == 1
         out = outs[0]
-        txid.serialize() == funding_info[0].txid
+        txid == funding_info[0].txid
         funding_info[0].index == out[0]
-        funding_info[1].serialize == out[1].serialize()
+        funding_info[1] == out[1]
 
 
 def test_get_and_clear_pending_monitor_events(channel_monitor):
@@ -233,7 +233,7 @@ def test_commitment_tx_broadcasted_getters():
     event = MonitorEvent.commitment_tx_broadcasted(outpoint)
 
     assert event.type == "CommitmentTxBroadcasted"
-    assert event.outpoint.serialize() == outpoint.serialize()
+    assert event.outpoint == outpoint
 
     # Check no other getters are available
     check_not_available_getters(event, ["outpoint"], all_attributes)

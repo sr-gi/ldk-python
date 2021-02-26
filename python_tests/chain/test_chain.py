@@ -41,7 +41,7 @@ def test_unknown_tx():
 # a mock library
 class A:
     def get_utxo(self, genesis_hash, short_channel_id):
-        if genesis_hash.serialize() == bytes(32):
+        if genesis_hash == BlockHash(bytes(32)):
             raise UnknownChain()
         if short_channel_id % 2:
             raise UnknownTx()

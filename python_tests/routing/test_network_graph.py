@@ -367,9 +367,9 @@ def test_channel_info_serialize(channel_info_bytes):
 
 def test_channel_info_getters(channel_info, channel_info_data):
     assert channel_info.features.serialize() == channel_info_data.get("features").serialize()
-    assert channel_info.node_one.serialize() == channel_info_data.get("node_one").serialize()
+    assert channel_info.node_one == channel_info_data.get("node_one")
     assert channel_info.one_to_two.serialize() == channel_info_data.get("one_to_two").serialize()
-    assert channel_info.node_two.serialize() == channel_info_data.get("node_two").serialize()
+    assert channel_info.node_two == channel_info_data.get("node_two")
     assert channel_info.two_to_one.serialize() == channel_info_data.get("two_to_one").serialize()
     assert channel_info.capacity_sats == channel_info_data.get("capacity_sats")
     assert channel_info.announcement_message.serialize() == channel_info_data.get("announcement_message").serialize()

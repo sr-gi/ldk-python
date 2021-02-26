@@ -41,6 +41,12 @@ def test_secret_key_str():
     assert str(SecretKey(sk_bytes)) == sk_bytes.hex()
 
 
+def test_secret_key_cmp():
+    sk_bytes = get_random_sk_bytes()
+    assert SecretKey(sk_bytes) == SecretKey(sk_bytes)
+    assert SecretKey(get_random_sk_bytes()) != SecretKey(sk_bytes)
+
+
 # PUBLIC KEY TESTS
 
 
@@ -83,6 +89,12 @@ def test_public_key_str():
     assert (str(PublicKey(pk_bytes))) == pk_bytes.hex()
 
 
+def test_public_key_cmp():
+    pk_bytes = get_random_pk_bytes()
+    assert PublicKey(pk_bytes) == PublicKey(pk_bytes)
+    assert PublicKey(get_random_pk_bytes()) != PublicKey(pk_bytes)
+
+
 # SIGNATURE TESTS
 
 
@@ -117,6 +129,12 @@ def test_signature_serialize_compact():
 def test_signature_str():
     der_sig = get_random_der_signature()
     assert (str(Signature(der_sig))) == der_sig.hex()
+
+
+def test_signature_cmp():
+    der_sig = get_random_der_signature()
+    assert Signature(der_sig) == Signature(der_sig)
+    assert Signature(get_random_der_signature()) != Signature(der_sig)
 
 
 # BLOCK HEADER TESTS
@@ -177,6 +195,14 @@ def test_block_str(genesis_raw_block_header, ldk_block_header):
     assert str(ldk_block_header) == genesis_raw_block_header.hex()
 
 
+def test_block_cmp(genesis_raw_block_header):
+    another_raw_block_header = bytes.fromhex(
+        "010000009500c43a25c624520b5100adf82cb9f9da72fd2447a496bc600b0000000000006cd862370395dedf1da2841ccda0fc489e3039de5f1ccddef0e834991a65600ea6c8cb4db3936a1ae3143991"
+    )
+    assert BlockHeader(genesis_raw_block_header) == BlockHeader(genesis_raw_block_header)
+    assert BlockHeader(genesis_raw_block_header) != BlockHeader(another_raw_block_header)
+
+
 # SCRIPT TESTS
 
 
@@ -195,6 +221,13 @@ def test_script_str():
     s_data = get_random_bytes(50)
 
     assert str(Script(s_data)) == s_length + s_data.hex()
+
+
+def test_script_cmp():
+    s_data = get_random_bytes(50)
+
+    assert Script(s_data) == Script(s_data)
+    assert Script(get_random_bytes(50)) != Script(s_data)
 
 
 # OUTPOINT TESTS
@@ -236,6 +269,12 @@ def test_outpoint_str():
     assert str(OutPoint.from_bytes(outpoint)) == outpoint.hex()[:68] + "0000"
 
 
+def test_outpoint_cmp():
+    outpoint = get_random_bytes(34)
+    assert OutPoint.from_bytes(outpoint) == OutPoint.from_bytes(outpoint)
+    assert OutPoint.from_bytes(outpoint) != OutPoint.from_bytes(get_random_bytes(34))
+
+
 # TXIN TESTS
 
 
@@ -259,8 +298,8 @@ def test_txin_getters():
     witness = [get_random_bytes(72), get_random_bytes(73)]
     txin = TxIn(prev_out, script_sig, sequence, witness)
 
-    assert txin.previous_output.serialize() == prev_out.serialize()
-    assert txin.script_sig.serialize() == script_sig.serialize()
+    assert txin.previous_output == prev_out
+    assert txin.script_sig == script_sig
     assert txin.sequence == sequence
     assert txin.witness == witness
 
@@ -271,6 +310,13 @@ def test_txin_serialize(txin):
 
 def test_txin_str(txin):
     assert str(TxIn.from_bytes(txin)) == txin.hex()
+
+
+def test_txin_cmp(txin):
+    txin2 = txin[:-1]
+    txin2 += b"\xfe"
+    assert TxIn.from_bytes(txin) == TxIn.from_bytes(txin)
+    assert TxIn.from_bytes(txin) != TxIn.from_bytes(txin2)
 
 
 # TXOUT TESTS
@@ -293,7 +339,7 @@ def test_txout_getters():
     txout = TxOut(value, script_pubkey)
 
     assert txout.value == value
-    assert txout.script_pubkey.serialize() == script_pubkey.serialize()
+    assert txout.script_pubkey == script_pubkey
 
 
 def test_txout_serialize(txout):
@@ -302,6 +348,16 @@ def test_txout_serialize(txout):
 
 def test_txout_str(txout):
     assert str(TxOut.from_bytes(txout)) == txout.hex()
+
+
+def test_txout_cmp(txout):
+    txout2 = txout[:-1]
+    txout2 += b"\x86"
+    assert TxOut.from_bytes(txout) == TxOut.from_bytes(txout)
+    assert TxOut.from_bytes(txout) != TxOut.from_bytes(txout2)
+
+
+# TRANSACTION TESTS
 
 
 def test_transaction_init(txin, txout):
@@ -328,10 +384,10 @@ def test_transaction_getters(txin, txout):
     assert tx.lock_time == lock_time
 
     for i, local_i in zip(tx.input, ins):
-        assert i.serialize() == local_i.serialize()
+        assert i == local_i
 
     for o, local_o in zip(tx.output, outs):
-        assert o.serialize() == local_o.serialize()
+        assert o == local_o
 
 
 # The rest of the exposed transaction functionality is not tested, we're only doing blackbox testing here.
@@ -343,6 +399,13 @@ def test_serialize(tx):
 
 def test_str(tx):
     assert str(Transaction.from_bytes(tx)) == tx.hex()
+
+
+def test_cmp(tx):
+    tx2 = tx[:-1]
+    tx2 += b"\x01"
+    assert Transaction.from_bytes(tx) == Transaction.from_bytes(tx)
+    assert Transaction.from_bytes(tx) != Transaction.from_bytes(tx2)
 
 
 # TEST NETWORK
@@ -358,3 +421,8 @@ def test_testnet():
 
 def test_regtest():
     assert str(Network.regtest()) == "regtest"
+
+
+def test_network_cmp():
+    assert Network.mainnet() == Network.mainnet()
+    assert Network.mainnet() != Network.testnet()
