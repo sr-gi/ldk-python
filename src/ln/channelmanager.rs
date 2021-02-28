@@ -1,4 +1,5 @@
 use hex;
+use pyo3::class::basic::CompareOp;
 use pyo3::create_exception;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
@@ -72,6 +73,14 @@ impl PyObjectProtocol for PyPaymentPreimage {
     fn __str__(&self) -> String {
         format!("{}", hex::encode(&self.inner.0))
     }
+
+    fn __richcmp__(&self, other: PyPaymentPreimage, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
 }
 
 #[pyclass(name=PaymentSecret)]
@@ -99,6 +108,14 @@ impl PyObjectProtocol for PyPaymentSecret {
     fn __str__(&self) -> String {
         format!("{}", hex::encode(&self.inner.0))
     }
+
+    fn __richcmp__(&self, other: PyPaymentSecret, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
 }
 
 #[pyclass(name=PaymentHash)]
@@ -125,6 +142,14 @@ impl PyPaymentHash {
 impl PyObjectProtocol for PyPaymentHash {
     fn __str__(&self) -> String {
         format!("{}", hex::encode(&self.inner.0))
+    }
+
+    fn __richcmp__(&self, other: PyPaymentHash, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }
 #[pyclass(name=ChannelDetails)]

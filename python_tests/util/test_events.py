@@ -87,7 +87,7 @@ def test_payment_received_getters():
     amt = get_random_int(8)
     event = Event.payment_received(payment_hash, payment_secret, amt)
 
-    assert event.payment_hash.serialize() == payment_hash.serialize()
+    assert event.payment_hash == payment_hash
     assert event.payment_secret == payment_secret
     assert event.amt == amt
 
@@ -106,7 +106,7 @@ def test_payment_sent_getters():
     payment_preimage = PaymentPreimage(get_random_bytes(32))
     event = Event.payment_sent(payment_preimage)
 
-    assert event.payment_preimage.serialize() == payment_preimage.serialize()
+    assert event.payment_preimage == payment_preimage
 
     # Check no other getters are available
     local_attributes = ["payment_preimage"]
@@ -125,7 +125,7 @@ def test_payment_failed_getters():
     rejected_by_dest = True
     event = Event.payment_failed(payment_hash, rejected_by_dest)
 
-    assert event.payment_hash.serialize() == payment_hash.serialize()
+    assert event.payment_hash == payment_hash
     assert event.rejected_by_dest == rejected_by_dest
 
     # Check no other getters are available

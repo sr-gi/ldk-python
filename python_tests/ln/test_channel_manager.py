@@ -56,6 +56,13 @@ def test_payment_preimage_str():
     assert str(PaymentPreimage(raw_preimage)) == raw_preimage.hex()
 
 
+def test_payment_preimage_cmp():
+    raw_preimage = get_random_bytes(32)
+
+    assert PaymentPreimage(raw_preimage) == PaymentPreimage(raw_preimage)
+    assert PaymentPreimage(raw_preimage) != PaymentPreimage(get_random_bytes(32))
+
+
 # PAYMENT SECRET
 
 
@@ -75,6 +82,13 @@ def test_payment_preimage_str():
     assert str(PaymentSecret(raw_secret)) == raw_secret.hex()
 
 
+def test_payment_preimage_cmp():
+    raw_secret = get_random_bytes(32)
+
+    assert PaymentSecret(raw_secret) == PaymentSecret(raw_secret)
+    assert PaymentSecret(raw_secret) != PaymentSecret(get_random_bytes(32))
+
+
 # PAYMENT HASH
 
 
@@ -92,6 +106,13 @@ def test_payment_hash_str():
     raw_hash = get_random_bytes(32)
 
     assert str(PaymentHash(raw_hash)) == raw_hash.hex()
+
+
+def test_payment_hash_cmp():
+    raw_hash = get_random_bytes(32)
+
+    assert PaymentHash(raw_hash) == PaymentHash(raw_hash)
+    assert PaymentHash(raw_hash) != PaymentHash(get_random_bytes(32))
 
 
 # CHANNEL DETAILS
