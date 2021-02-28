@@ -1,6 +1,8 @@
+use pyo3::class::basic::CompareOp;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
+use pyo3::PyObjectProtocol;
 
 use lightning::ln::features::{ChannelFeatures, InitFeatures, NodeFeatures};
 use lightning::util::ser::{Readable, Writeable};
@@ -40,6 +42,17 @@ impl PyInitFeatures {
     }
 }
 
+#[pyproto]
+impl PyObjectProtocol for PyInitFeatures {
+    fn __richcmp__(&self, other: PyInitFeatures, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
+}
+
 #[pyclass(name=ChannelFeatures)]
 #[derive(Clone)]
 pub struct PyChannelFeatures {
@@ -75,6 +88,17 @@ impl PyChannelFeatures {
     }
 }
 
+#[pyproto]
+impl PyObjectProtocol for PyChannelFeatures {
+    fn __richcmp__(&self, other: PyChannelFeatures, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
+    }
+}
+
 #[pyclass(name=NodeFeatures)]
 #[derive(Clone)]
 pub struct PyNodeFeatures {
@@ -107,5 +131,16 @@ impl PyNodeFeatures {
 
     fn serialize(&self, py: Python) -> Py<PyBytes> {
         PyBytes::new(py, &self.inner.encode()).into()
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyNodeFeatures {
+    fn __richcmp__(&self, other: PyNodeFeatures, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }

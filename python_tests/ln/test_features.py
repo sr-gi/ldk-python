@@ -28,9 +28,14 @@ def test_init_features_serialize(init_features_bytes):
     assert InitFeatures.known().serialize() == InitFeatures.from_bytes(init_features_bytes).serialize()
 
 
+def test_init_features_cmp():
+    assert InitFeatures.known() == InitFeatures.known()
+    assert InitFeatures.known() != InitFeatures()
+
+
 @pytest.fixture
 def channel_features_bytes():
-    return bytes.fromhex("0000")
+    return bytes.fromhex("0003029221")
 
 
 def test_channel_features_empty():
@@ -46,7 +51,12 @@ def test_channel_features_from_bytes(channel_features_bytes):
 
 
 def test_channel_features_serialize(channel_features_bytes):
-    assert ChannelFeatures.known().serialize() == ChannelFeatures.from_bytes(channel_features_bytes).serialize()
+    ChannelFeatures.from_bytes(channel_features_bytes).serialize() == channel_features_bytes
+
+
+def test_channel_features_cmp(channel_features_bytes):
+    assert ChannelFeatures.known() == ChannelFeatures.known()
+    assert ChannelFeatures.known() != ChannelFeatures.from_bytes(channel_features_bytes)
 
 
 @pytest.fixture
@@ -68,3 +78,8 @@ def test_node_features_from_bytes(node_features_bytes):
 
 def test_node_features_serialize(node_features_bytes):
     assert NodeFeatures.known().serialize() == NodeFeatures.from_bytes(node_features_bytes).serialize()
+
+
+def test_node_features_cmp():
+    assert NodeFeatures.known() == NodeFeatures.known()
+    assert NodeFeatures.known() != NodeFeatures()
