@@ -1,3 +1,5 @@
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash as StdHash, Hasher};
 use std::str;
 
 use pyo3::class::basic::CompareOp;
@@ -13,7 +15,6 @@ use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
 use bitcoin::consensus::encode::{deserialize, serialize, serialize_hex};
 use bitcoin::hash_types::{BlockHash, Txid};
 use bitcoin::hashes::sha256;
-use bitcoin::hashes::Hash;
 use bitcoin::network::constants::Network;
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::constants::{PUBLIC_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE};
@@ -43,7 +44,8 @@ impl PySecretKey {
     }
 
     fn sign(&self, message: String) -> PyResult<PySignature> {
-        let message_hash = sha256::Hash::hash(message.as_bytes());
+        // FIXME: Temporary fix due to ambiguous Hash definition in rust-bitcoin
+        let message_hash = <sha256::Hash as bitcoin::hashes::Hash>::hash(message.as_bytes());
         let message_hash = secp256k1::Message::from_slice(&message_hash);
         match message_hash {
             Ok(x) => Ok(PySignature {
@@ -101,7 +103,8 @@ impl PyPublicKey {
     }
 
     fn verify(&self, message: String, signature: PySignature) -> PyResult<bool> {
-        let message_hash = sha256::Hash::hash(message.as_bytes());
+        // FIXME: Temporary fix due to ambiguous Hash definition in rust-bitcoin
+        let message_hash = <sha256::Hash as bitcoin::hashes::Hash>::hash(message.as_bytes());
         let message_hash = secp256k1::Message::from_slice(&message_hash);
         match message_hash {
             Ok(x) => match secp256k1::Secp256k1::new().verify(&x, &signature.inner, &self.inner) {
@@ -134,6 +137,12 @@ impl PyObjectProtocol for PyPublicKey {
             CompareOp::Ne => Ok(self.inner != other.inner),
             _ => Ok(false),
         }
+    }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
     }
 }
 
@@ -361,6 +370,12 @@ impl PyObjectProtocol for PyTxId {
             CompareOp::Ne => Ok(self.inner != other.inner),
             _ => Ok(false),
         }
+    }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
     }
 }
 
