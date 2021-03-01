@@ -23,7 +23,7 @@ use bitcoin::secp256k1::key::{PublicKey, SecretKey};
 use lightning::chain::transaction::OutPoint;
 
 #[pyclass(name=SecretKey)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct PySecretKey {
     pub inner: SecretKey,
 }
@@ -147,7 +147,7 @@ impl PyObjectProtocol for PyPublicKey {
 }
 
 #[pyclass(name=Signature)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct PySignature {
     pub inner: secp256k1::Signature,
 }
@@ -194,7 +194,7 @@ impl PyObjectProtocol for PySignature {
 }
 
 #[pyclass(name=BlockHeader)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct PyBlockHeader {
     pub inner: BlockHeader,
 }
@@ -267,7 +267,7 @@ impl PyObjectProtocol for PyBlockHeader {
 }
 
 #[pyclass(name=BlockHash)]
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct PyBlockHash {
     pub inner: BlockHash,
 }
@@ -302,7 +302,7 @@ impl PyObjectProtocol for PyBlockHash {
 }
 
 #[pyclass(name=Script)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct PyScript {
     pub inner: Script,
 }
@@ -336,10 +336,16 @@ impl PyObjectProtocol for PyScript {
             _ => Ok(false),
         }
     }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
+    }
 }
 
 #[pyclass(name=TxId)]
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct PyTxId {
     pub inner: Txid,
 }
@@ -380,7 +386,7 @@ impl PyObjectProtocol for PyTxId {
 }
 
 #[pyclass(name=OutPoint)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct PyOutPoint {
     pub inner: OutPoint,
 }
@@ -448,10 +454,16 @@ impl PyObjectProtocol for PyOutPoint {
             _ => Ok(false),
         }
     }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
+    }
 }
 
 #[pyclass(name=TxIn)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct PyTxIn {
     pub inner: TxIn,
 }
@@ -534,10 +546,16 @@ impl PyObjectProtocol for PyTxIn {
             _ => Ok(false),
         }
     }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
+    }
 }
 
 #[pyclass(name=TxOut)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct PyTxOut {
     pub inner: TxOut,
 }
@@ -592,10 +610,16 @@ impl PyObjectProtocol for PyTxOut {
             _ => Ok(false),
         }
     }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
+    }
 }
 
 #[pyclass(name=Transaction)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct PyTransaction {
     pub inner: Transaction,
 }
@@ -707,10 +731,16 @@ impl PyObjectProtocol for PyTransaction {
             _ => Ok(false),
         }
     }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
+    }
 }
 
 #[pyclass(name=Network)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct PyNetwork {
     pub inner: Network,
 }
@@ -755,5 +785,11 @@ impl PyObjectProtocol for PyNetwork {
             CompareOp::Ne => Ok(self.inner != other.inner),
             _ => Ok(false),
         }
+    }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
     }
 }

@@ -4,6 +4,8 @@ use pyo3::create_exception;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::PyObjectProtocol;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash as StdHash, Hasher};
 
 use crate::chain::chaininterface::{PyBroadcasterInterface, PyFeeEstimator};
 use crate::chain::chainmonitor::PyChainMonitor;
@@ -50,7 +52,7 @@ pub fn match_payment_error(e: CM::PaymentSendFailure) -> PyErr {
 }
 
 #[pyclass(name=PaymentPreimage)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct PyPaymentPreimage {
     pub inner: PaymentPreimage,
 }
@@ -81,10 +83,16 @@ impl PyObjectProtocol for PyPaymentPreimage {
             _ => Ok(false),
         }
     }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
+    }
 }
 
 #[pyclass(name=PaymentSecret)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct PyPaymentSecret {
     pub inner: PaymentSecret,
 }
@@ -116,10 +124,16 @@ impl PyObjectProtocol for PyPaymentSecret {
             _ => Ok(false),
         }
     }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
+    }
 }
 
 #[pyclass(name=PaymentHash)]
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct PyPaymentHash {
     pub inner: PaymentHash,
 }
@@ -150,6 +164,12 @@ impl PyObjectProtocol for PyPaymentHash {
             CompareOp::Ne => Ok(self.inner != other.inner),
             _ => Ok(false),
         }
+    }
+
+    fn __hash__(&self) -> u64 {
+        let mut h = DefaultHasher::new();
+        self.hash(&mut h);
+        h.finish()
     }
 }
 #[pyclass(name=ChannelDetails)]
