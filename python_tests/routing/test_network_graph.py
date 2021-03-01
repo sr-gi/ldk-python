@@ -301,7 +301,7 @@ def test_node_announcemet_info_getters(directional_channel_info_data, directiona
     assert directional_channel_info.cltv_expiry_delta == directional_channel_info_data.get("cltv_expiry_delta")
     assert directional_channel_info.htlc_minimum_msat == directional_channel_info_data.get("htlc_minimum_msat")
     assert directional_channel_info.htlc_maximum_msat == directional_channel_info_data.get("htlc_maximum_msat")
-    assert directional_channel_info.fees.serialize() == directional_channel_info_data.get("fees").serialize()
+    assert directional_channel_info.fees == directional_channel_info_data.get("fees")
     assert directional_channel_info.last_update_message == directional_channel_info_data.get("last_update_message")
 
 
@@ -366,7 +366,7 @@ def test_channel_info_serialize(channel_info_bytes):
 
 
 def test_channel_info_getters(channel_info, channel_info_data):
-    assert channel_info.features.serialize() == channel_info_data.get("features").serialize()
+    assert channel_info.features == channel_info_data.get("features")
     assert channel_info.node_one == channel_info_data.get("node_one")
     assert channel_info.one_to_two.serialize() == channel_info_data.get("one_to_two").serialize()
     assert channel_info.node_two == channel_info_data.get("node_two")
@@ -471,7 +471,7 @@ def test_node_announcement_info_serialize(node_announcement_info_bytes):
 
 
 def test_node_announcement_info_getters(node_announcement_info, node_announcement_info_data):
-    node_announcement_info.features.serialize() == node_announcement_info_data.get("features").serialize()
+    node_announcement_info.features == node_announcement_info_data.get("features")
     node_announcement_info.last_update == node_announcement_info_data.get("last_update")
     node_announcement_info.rgb == node_announcement_info_data.get("rgb")
     node_announcement_info.alias == node_announcement_info_data.get("alias")

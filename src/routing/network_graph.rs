@@ -1,3 +1,4 @@
+use pyo3::class::basic::CompareOp;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
@@ -442,7 +443,7 @@ impl PyObjectProtocol for PyChannelInfo {
 }
 
 #[pyclass(name=RoutingFees)]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct PyRoutingFees {
     inner: RoutingFees,
 }
@@ -479,6 +480,17 @@ impl PyRoutingFees {
     #[getter]
     fn get_proportional_millionths(&self) -> u32 {
         self.inner.proportional_millionths
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyRoutingFees {
+    fn __richcmp__(&self, other: PyRoutingFees, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Ok(false),
+        }
     }
 }
 
